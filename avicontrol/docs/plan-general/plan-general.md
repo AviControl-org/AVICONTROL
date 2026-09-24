@@ -67,7 +67,23 @@ avicontrol/
 │   │   │   │   ├── GlobalExceptionHandler.java
 │   │   │   │   └── job/
 │   │   │   │       └── VaciadoSanitarioJob.java        # entrada no HTTP (proceso automático)
-│   │   │   ├── dto/                                # requests y responses (records), usados por api y service
+│   │   │   ├── dto/                                # requests y responses (records), un par por caso de uso; no se comparten entre casos de uso
+│   │   │   │   ├── RegistrarGalponRequest.java
+│   │   │   │   ├── EditarGalponRequest.java
+│   │   │   │   ├── GalponResponse.java
+│   │   │   │   ├── GalponResumenResponse.java
+│   │   │   │   ├── GalponDetalleResponse.java
+│   │   │   │   ├── PaginaResponse.java
+│   │   │   │   ├── ActualizarEstadoRequest.java
+│   │   │   │   ├── HistorialEstadoResponse.java
+│   │   │   │   ├── RegistrarLoteRequest.java
+│   │   │   │   ├── LoteResponse.java
+│   │   │   │   ├── MortalidadRequest.java
+│   │   │   │   ├── PoblacionResponse.java
+│   │   │   │   ├── AlertaSanitariaRequest.java
+│   │   │   │   ├── VaciadoSanitarioRequest.java
+│   │   │   │   ├── GenerarAlertaMantenimientoRequest.java
+│   │   │   │   └── AlertaMantenimientoResponse.java
 │   │   │   ├── service/                            # Capa de negocio
 │   │   │   │   ├── GalponService.java
 │   │   │   │   ├── GalponEstadoService.java        # Actualizar estado (única autoridad)
@@ -78,11 +94,37 @@ avicontrol/
 │   │   │   │   ├── AlertaSanitariaService.java
 │   │   │   │   ├── VaciadoSanitarioService.java
 │   │   │   │   └── AlertaMantenimientoService.java
-│   │   │   ├── repository/                         # Capa de acceso a datos
+│   │   │   ├── repository/                         # Capa de acceso a datos: único lugar con JPA/SQL, incluido el bloqueo pesimista
+│   │   │   │   ├── GalponRepository.java           # findByIdForUpdate (SELECT ... FOR UPDATE) vive aquí, no en el servicio
+│   │   │   │   ├── LoteRepository.java
+│   │   │   │   ├── HistorialEstadoRepository.java
+│   │   │   │   ├── HistorialCambioGalponRepository.java
+│   │   │   │   ├── AlertaMantenimientoRepository.java
+│   │   │   │   ├── AlertaVaciadoSanitarioRepository.java
+│   │   │   │   └── RegistroProcesamientoRepository.java
 │   │   │   ├── entity/                             # Modelo de dominio y enums
-│   │   │   ├── mapper/                             # entity <-> dto
-│   │   │   ├── exception/                          # errores de negocio
+│   │   │   │   ├── Galpon.java
+│   │   │   │   ├── Lote.java
+│   │   │   │   ├── HistorialEstado.java
+│   │   │   │   ├── HistorialCambioGalpon.java
+│   │   │   │   ├── AlertaMantenimiento.java
+│   │   │   │   ├── AlertaVaciadoSanitario.java
+│   │   │   │   ├── RegistroProcesamiento.java
+│   │   │   │   └── EstadoGalpon.java, OrigenCambioEstado.java, EstadoAlertaMantenimiento.java, AccionSanitaria.java  # enums
+│   │   │   ├── mapper/                             # entity <-> dto; capa lateral propia, no parte de service
+│   │   │   │   ├── GalponMapper.java
+│   │   │   │   ├── LoteMapper.java
+│   │   │   │   └── AlertaMantenimientoMapper.java
+│   │   │   ├── exception/                          # errores de negocio, lanzados solo desde service
+│   │   │   │   ├── RecursoNoEncontradoException.java
+│   │   │   │   ├── ConflictoException.java
+│   │   │   │   ├── TransicionInvalidaException.java
+│   │   │   │   └── ValidacionNegocioException.java
 │   │   │   └── config/                             # Clock, planificador, Jackson
+│   │   │       ├── ClockConfig.java
+│   │   │       ├── SchedulingConfig.java
+│   │   │       ├── JacksonConfig.java
+│   │   │       └── AvicontrolProperties.java        # @ConfigurationProperties de avicontrol.*
 │   │   └── resources/
 │   │       ├── application.properties
 │   │       └── db/migration/                       # V1__..., V2__... (Flyway)
@@ -96,6 +138,8 @@ avicontrol/
 ```
 
 **Structure Decision**: un único proyecto Maven (`avicontrol/`) organizado **por capa**, que es la organización que describe una arquitectura n-layers. Los nombres de las clases de dominio siguen a los specs (`Galpon`, `Lote`) sin tildes; los paquetes de las capas van en inglés (`api`, `service`, `repository`, `entity`, `mapper`, `dto`). Los procesos automáticos (`api/job`) se tratan como otro punto de entrada de la capa `api`: llaman al servicio y no contienen reglas de negocio.
+
+**Los DTO no se estandarizan entre casos de uso.** Cada spec define sus propias Key Entities con campos distintos (por ejemplo, `RegistrarGalponRequest` solo trae `nombre` y `aforoMaximo`; `AlertaSanitariaRequest` trae `accion`, `galponId`, `loteId`, `fechaHora`, `tipoEnfermedad`, `descripcion` y `gravedad`). Un DTO genérico compartido entre casos de uso obligaría a incluir campos que no aplican a todos, o a usar `Object`/mapas sueltos, perdiendo la validación estática de `@Valid` y el tipado de records. Por eso hay un DTO de request y, cuando corresponde, uno de response por caso de uso, listados arriba junto al resto de la capa `dto`; el mapeo entre entidad y DTO vive en `mapper`, no en el propio DTO.
 
 ## Architecture & Design Decisions
 
@@ -118,38 +162,46 @@ avicontrol/
 Administrador · Técnico de infraestructura · Módulo 2 · Módulo 3 · Proceso automático
                  │ HTTP + JSON                                  │ @Scheduled
         ┌────────▼──────────────────────────────────────────────▼─────┐
-        │ api          Controllers, GlobalExceptionHandler, job        │
+        │ api          Controllers, GlobalExceptionHandler, job        │  usa dto
         ├──────────────────────────────────────────────────────────────┤
-        │ service      Reglas de negocio, @Transactional, mappers      │
+        │ service      Reglas de negocio, @Transactional                │  usa dto, mapper, exception
         ├──────────────────────────────────────────────────────────────┤
-        │ repository   Interfaces JpaRepository y consultas            │
+        │ mapper       entity <-> dto                                   │  capa lateral, no parte de service
+        ├──────────────────────────────────────────────────────────────┤
+        │ repository   Interfaces JpaRepository, @Query, bloqueo        │
+        │              pesimista (SELECT ... FOR UPDATE)                │
         ├──────────────────────────────────────────────────────────────┤
         │ entity       @Entity y enums del dominio                     │
         └──────────────────────────────────────────────────────────────┘
-        dto, mapper y exception: piezas de apoyo que cruzan las fronteras
+        dto y exception: sin dependencias del proyecto, usadas por las capas de arriba
 ```
+
+`service` es la única capa que puede llamar a `repository`; ninguna otra capa (ni `api`, ni `mapper`) accede a un repositorio directamente. Todo acceso a JPA — incluido el bloqueo pesimista de `GalponEstadoService` — está encapsulado en un método de `repository`; `service` lo invoca, nunca ejecuta `@Query` ni `EntityManager` por su cuenta.
 
 | Paquete | Responsabilidad | Puede depender de | No debe |
 |---|---|---|---|
-| `api` | Recibir la petición, validar el formato (`@Valid`), llamar a un servicio y devolver la respuesta con su código HTTP. `GlobalExceptionHandler` traduce excepciones a respuestas de error. | `service`, `dto`, `exception` | Tener reglas de negocio ni acceder a repositorios o entidades. |
-| `service` | Aplicar las reglas de cada spec, abrir y cerrar la transacción, coordinar repositorios y llamar a `GalponEstadoService` cuando haga falta cambiar un estado. | `repository`, `entity`, `mapper`, `dto`, `exception` | Conocer HTTP (`ResponseEntity`, códigos de estado). |
-| `repository` | Leer y escribir en la base de datos. Consultas derivadas y `@Query` cuando haga falta. | `entity` | Tener reglas de negocio. |
-| `entity` | Representar las tablas y los enums del dominio. | Nada del proyecto | Salir por la API. |
-| `mapper` | Convertir entre entidad y DTO. | `entity`, `dto` | Consultar la base de datos. |
-| `dto` | Records inmutables de entrada y salida con anotaciones de validación. | Nada del proyecto | Contener lógica. |
-| `exception` | Excepciones de negocio (`RecursoNoEncontradoException`, `ConflictoException`, `TransicionInvalidaException`, `ValidacionNegocioException`). | Nada del proyecto | |
+| `api` | Recibir la petición, validar el **formato** de entrada (`@Valid`: campo vacío, tamaño, patrón, tipo), llamar a un servicio y devolver la respuesta con su código HTTP. `GlobalExceptionHandler` captura las excepciones que suben desde `service` y las traduce a `ProblemDetail`. | `service`, `dto`, `exception` (solo para capturarlas en `GlobalExceptionHandler`, nunca para lanzarlas) | Tener reglas de negocio; acceder a `repository`, `entity` o `mapper` directamente. |
+| `service` | Aplicar las reglas de cada spec que dependan de datos o estado (nombre único, transición permitida, cantidad no mayor que la población), abrir y cerrar la transacción, invocar `repository` para toda lectura o escritura, invocar `mapper` para convertir entidad ↔ DTO, y llamar a `GalponEstadoService` cuando haga falta cambiar un estado. Es la única capa que lanza excepciones de negocio. | `repository`, `mapper`, `dto`, `exception` | Conocer HTTP (`ResponseEntity`, códigos de estado); ejecutar `@Query`, `EntityManager` o SQL por su cuenta — eso vive en `repository`. |
+| `repository` | Único punto de acceso a JPA: consultas derivadas, `@Query` y bloqueo pesimista (`SELECT ... FOR UPDATE`, p. ej. `GalponRepository.findByIdForUpdate`). No decide si el resultado es válido para el negocio, solo lo entrega. | `entity` | Tener reglas de negocio; devolver DTOs (siempre devuelve entidades). |
+| `entity` | Representar las tablas y los enums del dominio. | Nada del proyecto | Salir por la API; contener anotaciones de validación de formato (esas van en `dto`). |
+| `mapper` | Convertir entre entidad y DTO en ambos sentidos. Es invocado por `service`, no forma parte de `service`. | `entity`, `dto` | Consultar la base de datos; contener reglas de negocio. |
+| `dto` | Records inmutables de entrada y salida con anotaciones de validación de **formato** únicamente (`@NotBlank`, `@Size`, `@Positive`, `@Pattern`). Las reglas que dependen de la base de datos (nombre único, transición permitida según el estado vigente) NO van aquí: se validan en `service`. | Nada del proyecto | Contener lógica ni validaciones que necesiten consultar la base de datos. |
+| `exception` | Excepciones de negocio (`RecursoNoEncontradoException`, `ConflictoException`, `TransicionInvalidaException`, `ValidacionNegocioException`), lanzadas únicamente desde `service` y capturadas únicamente en `GlobalExceptionHandler` (`api`). | Nada del proyecto | Ser lanzada desde `repository`, `entity` o `mapper`. |
 
 **Reglas de la arquitectura** (se comprueban automáticamente con ArchUnit, tarea T018):
 
-1. Las dependencias van en una sola dirección: `api → service → repository → entity`. Ningún controlador usa un repositorio.
+1. Las dependencias van en una sola dirección: `api → service → repository → entity`, con `mapper` y `dto` como capas laterales que `service` usa. Ningún controlador usa un `repository` ni una `entity` directamente.
 2. Las entidades no salen del servicio: la API solo recibe y devuelve DTOs.
-3. El mapeo se hace en el servicio: el controlador entrega el request y recibe el response.
+3. El mapeo entre entidad y DTO solo ocurre dentro de una clase de `mapper`, invocada desde `service`: ni `api` ni `repository` mapean.
 4. `@Transactional` solo se declara en la capa `service`.
 5. Solo `GalponEstadoService` escribe el estado de un galpón y el historial de estados.
+6. Solo las clases de `repository` usan anotaciones o tipos de JPA de bajo nivel (`@Query`, `EntityManager`, `LockModeType`); ninguna clase de `service` los usa directamente.
+7. Las clases de `exception` solo se lanzan (`throw`) desde `service`, y solo se capturan (`catch`) en `api`.
+8. `repository` no depende de `dto`, `mapper` ni `exception`.
 
 ### Diseño transversal
 
-- **Autoridad única de estado.** `GalponEstadoService.solicitarCambio(galponId, estadoEsperado, estadoDestino, origen)` bloquea la fila del galpón (`SELECT ... FOR UPDATE`), comprueba que el estado vigente sea el esperado y que la pareja transición-origen esté en `TransicionesPermitidas`, actualiza el estado y escribe `historial_estado`. Si otro proceso cambió el estado antes, rechaza la solicitud (FR-013 de actualizar estado).
+- **Autoridad única de estado.** `GalponEstadoService.solicitarCambio(galponId, estadoEsperado, estadoDestino, origen)` llama a `GalponRepository.findByIdForUpdate` (bloqueo pesimista con `SELECT ... FOR UPDATE`, implementado en `repository`, no en el propio servicio), comprueba que el estado vigente sea el esperado y que la pareja transición-origen esté en `TransicionesPermitidas`, actualiza el estado y escribe `historial_estado` a través de `HistorialEstadoRepository`. Si otro proceso cambió el estado antes, rechaza la solicitud (FR-013 de actualizar estado).
 - **Matriz de transiciones** (`TransicionesPermitidas`), tomada del spec de actualizar estado:
 
   | Desde | Hacia | Origen autorizado |

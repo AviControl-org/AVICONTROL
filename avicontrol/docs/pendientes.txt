@@ -1,0 +1,69 @@
+PENDIENTES / REVISAR - Plan general Módulo 1 (docs/plan-general/plan-general.md)
+
+1. Contradicción en spec-actualizarEstado/actualizar-estados-spec.md:
+   - FR-002 dice que Disponible -> Mantenimiento solo ocurre "al atender alerta de mantenimiento".
+   - El Scenario 1 del mismo spec muestra al administrador pasando de Disponible a Mantenimiento
+     directamente desde "Actualizar estado", sin mencionar ninguna alerta previa.
+   - Decidir con el equipo cual es el comportamiento correcto antes de implementar US3/US8.
+   - Ver Open Question 6 del plan (linea ~711): debe permanecer abierta, no darla por resuelta.
+
+2. registro_procesamiento no aclara si cubre dos specs distintos:
+   - recibirMortalidadDelGalpón FR-019 y actualizarPoblaciónActual FR-017 exigen,
+     cada uno por su lado, un registro tecnico de idempotencia.
+   - El plan solo documenta una tabla (registro_procesamiento) y la atribuye a FR-019.
+   - Aclarar si esa misma tabla satisface tambien el requisito de actualizarPoblaciónActual
+     o si hace falta un registro separado.
+
+3. GET /lotes?activos=true sin respaldo en ningun spec:
+   - Ni registrar-lote-spec.md ni consultar-galpón-lote.md definen un listado global
+     de lotes activos entre galpones.
+   - Revisar si el endpoint es necesario o si sobra, y documentarlo como decision de diseño
+     explicita (no implicita) si se mantiene.
+
+4. FR-002 de registrar-lote-spec.md sin endpoint explicito en el plan:
+   - Exige mostrar solo galpones "Disponible" al seleccionar galpón para registrar un lote.
+   - El plan solo menciona GET /galpones?estado=DISPONIBLE bajo "Tecnico de infraestructura"
+     (para alertas de mantenimiento), no bajo el flujo de Registrar lote del Administrador.
+   - Confirmar si se reutiliza GET /galpones?estado= generico y dejarlo explicito en el plan.
+
+5. Open Question 4 del plan (linea ~709) - se puede dar por resuelta:
+   - Conservar galpon_id + marcar desvinculado_en en el lote (en vez de eliminar la FK)
+     es la unica interpretacion compatible entre recibirVaciadoSanitario (FR-008, no debe
+     eliminar los UUID) y consultar-galpón-lote (FR-014, historial via llave foranea).
+   - Se puede mover de "Open Questions" a una nota resuelta en Diseño transversal.
+
+6. Doble mecanismo de concurrencia sin justificar en el plan:
+   - galpon y lote tienen columna version (optimistic locking) Y GalponEstadoService usa
+     SELECT ... FOR UPDATE (pessimistic locking) para las transiciones de estado.
+   - No es incorrecto (el lock pesimista protegeria solo el cambio de estado, y version
+     protegeria ediciones normales como nombre o aforo), pero el plan no explica esa
+     division y alguien podria implementarlo de forma redundante o conflictiva.
+
+7. Race condition real en la unicidad de nombre (galpon y lote):
+   - registrar/editar validan "nombre unico" con un check-then-insert en service, y
+     confian en el indice unico de PostgreSQL como respaldo.
+   - Si dos requests concurrentes pasan la validacion antes de que cualquiera haga commit,
+     el indice lanza una DataIntegrityViolationException de bajo nivel (JPA), no un
+     ConflictoException de negocio.
+   - El plan no dice que service debe capturar esa excepcion de JPA y traducirla, lo que
+     en la practica rompe la regla 7 de ArchUnit (una excepcion de JPA saliendo hacia api).
+
+8. service depende directamente de repository (interfaces JpaRepository concretas), no
+   de una abstraccion definida en el dominio e implementada en infraestructura (inversion
+   de dependencias / DIP). Correccion propuesta (senalada por el profesor):
+   - Separar el contrato del acceso a datos (interfaces puras en repository/, sin tipos
+     de Spring Data ni JPA) de la implementacion JPA (clases adaptadoras en repository/jpa/
+     que si usan JpaRepository, @Query, @Lock, Pageable, etc.).
+   - Ejemplo: GalponRepository (interfaz, en repository/) con metodos de tipos propios
+     (List<Galpon>, no Page<Galpon>); GalponJpaData (interface extends JpaRepository<Galpon,
+     UUID>, en repository/jpa/) con el @Lock/@Query reales; GalponRepositoryImpl (@Repository,
+     en repository/jpa/) implementa GalponRepository delegando en GalponJpaData.
+   - service solo importa la interfaz de repository/; Spring inyecta la implementacion de
+     repository/jpa/ en tiempo de ejecucion (unica implementacion del contrato).
+   - Costo: una clase adaptadora mas por agregado, y traducir Pageable/orden dentro del
+     adaptador en vez de en service.
+   - Ajustar regla 6 de ArchUnit: solo repository/jpa puede usar Spring Data/JPA de bajo
+     nivel; ni service ni repository/ (las interfaces) deben importar
+     org.springframework.data.. ni jakarta.persistence..
+   - Actualizar tambien el diagrama de capas, la tabla de responsabilidades y la tarea
+     T010 del plan para reflejar la subdivision repository/ vs repository/jpa/.
