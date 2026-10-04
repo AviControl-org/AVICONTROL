@@ -113,9 +113,9 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
   - UUID
   - Nombre
   - Estado
-  - Aforo máximo
+  - capacidad
 
-- **Lote**: Grupo de aves registrado para un galpón.
+- **Lote**: Grupo de pollos registrado para un galpón.
 	- UUID único
 	- Nombre
 	- Población inicial

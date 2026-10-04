@@ -6,7 +6,7 @@
 
  ### User Story 1 - Actualizar la población actual del lote (Priority: P1)
 
- Como administrador, quiero actualizar la población actual de un lote a partir de la cantidad de pollos retirados por muerte recibida en una alerta, para mantener disponible el número real de aves del lote.
+ Como administrador, quiero actualizar la población actual de un lote a partir de la cantidad de pollos retirados por muerte recibida en una alerta, para mantener disponible el número real de pollos del lote.
 
  **Why this priority**: La población actual es un dato operativo del lote y debe disminuir cada vez que se confirma una mortalidad. La población inicial debe permanecer como referencia histórica del registro original.
 
@@ -122,7 +122,7 @@
 
  - **Registro técnico de procesamiento**: Control interno para impedir el doble procesamiento de una alerta y detectar la reutilización de su UUID.
 
- - **Lote**: Grupo de aves registrado en un galpón.
+ - **Lote**: Grupo de pollos registrado en un galpón.
 	- UUID único
 	 - Nombre, obligatorio y único
 	- Población inicial, inmutable

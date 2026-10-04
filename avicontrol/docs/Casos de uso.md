@@ -10,6 +10,8 @@ Este documento explica brevemente los casos de uso encontrados en el diagrama, d
 
 - **Técnico de infraestructura**: Este actor tiene a su cargo generar una alerta al administrador para avisarle que se encontraron fallas en la infraestructura del galpón que necesitan ser atendidas.
 
+- **Operario de granja**: Este actor puede consultar el listado de galpones y el detalle de cada galpón con su lote activo. No puede registrar, editar ni cambiar el estado de ningún galpón.
+
 ---
 ## Casos de uso
 ### 1. Administrador
@@ -28,25 +30,26 @@ Este documento explica brevemente los casos de uso encontrados en el diagrama, d
 - **Productivo -> Aislamiento**: Solo mediante una solicitud válida del caso de uso "Recibir alerta sanitaria".
 - **En cosecha -> Vaciado sanitario**: Solo mediante una solicitud válida del caso de uso "Recibir vaciado sanitario".
 - **Aislamiento -> Productivo**: Solo mediante una solicitud válida de reanudación del caso de uso "Recibir alerta sanitaria".
-- **Aislamiento -> Vaciado sanitario**: Solo mediante una solicitud válida del caso de uso "Recibir vaciado sanitario".
+- **Aislamiento -> En cosecha**: Mediante una solicitud del administrador, para retomar la cosecha una vez resuelto el aislamiento sanitario.
 - **Mantenimiento -> Disponible**: Mediante una solicitud del administrador al finalizar el mantenimiento.
 - **Vaciado sanitario -> Disponible**: Mediante una solicitud del proceso automático al finalizar el periodo configurado.
 - Toda solicitud DEBE validarse contra el estado vigente dentro de la misma transacción que persiste el cambio.
 
 ### 2. Módulo 2
-- **Registrar retiro de ave**: En este caso de uso el modulo 2 avisa al administrador que se retiró un pollo del galpón porque murió. 
+- **Recibir mortalidad del galpón**: En este caso de uso el módulo 2 avisa al módulo 1 que murieron uno o varios pollos en el galpón, para que se descuente la cantidad de la población actual del lote. 
 
 - **Actualizar población actual**: En este caso de uso el sistema actualiza la población actual del lote a partir de uno o varios pollos retirados por muerte. No modifica el estado del galpón; cualquier cambio de estado debe remitirse al caso de uso "Actualizar estado".
 
 - **Recibir alerta sanitaria**: En este caso de uso el modulo 2 ocupa avisar al administrador de que en el galpón hay una enfermedad que contagió a uno o varios pollos y el galpón necesita estar en aislamiento.
 
-- **Recibir vacíado sanitario**: En este caso de uso el modulo 2 ocupa avisar al administrador de que se debe hacer el vaciado sanitario al galpón para poder pasar al estado disponible.
+- **Recibir vacíado sanitario**: En este caso de uso el módulo 2 avisa al módulo 1 que la cosecha finalizó y el galpón debe pasar a estado Vaciado sanitario. Una vez cumplido el periodo de limpieza configurado, el proceso automático lo devuelve a Disponible.
 
 ### 3. Técnico de infraestructura
 - **Generar alerta de mantenimiento**: En este caso de uso el técnico de infraestructura ocupa avisarle al administrador que hay fallas en el galpón y necesitan atención.
 
-### 4. Compartidos (Administrador, Módulo 2 y Módulo 3)
+### 4. Compartidos (Administrador, Operario de granja, Módulo 2 y Módulo 3)
 - **Consultar galpón y/o lote**: En este caso de uso el: 
 	1. **Administrador**: Ocupa visualizar los galpones y lotes activos en el sistema.
-	2. **Módulo 2**: Ocupa visualizar los galpones y lotes activos para conocer la edad del lote para el control de la dieta de los pollos.
-	3. **Módulo 3**: Ocupa visualizar los galpones y lotes activos para conocer el costo del lote y los pollos finales para poder calcular los costos de crianza y la venta bruta del lote. 
+	2. **Operario de granja**: Ocupa visualizar los galpones y lotes activos para supervisar la situación operativa de la granja.
+	3. **Módulo 2**: Ocupa visualizar los galpones y lotes activos para conocer la edad del lote para el control de la dieta de los pollos.
+	4. **Módulo 3**: Ocupa visualizar los galpones y lotes activos para conocer el costo del lote y los pollos finales para poder calcular los costos de crianza y la venta bruta del lote. 

@@ -6,7 +6,7 @@
 
 ### User Story 1 - Registro de un galpón (Priority: P1)
 
-Como administrador de granja, quiero registrar un galpón indicando su nombre y aforo máximo para incorporarlo al control operativo de la granja.
+Como administrador de granja, quiero registrar un galpón indicando su nombre y capacidad para incorporarlo al control operativo de la granja.
 
 **Why this priority**: Es la funcionalidad base para la operación del módulo 1; sin galpones registrados no se pueden crear lotes ni realizar seguimiento. Es una acción indispensable para el alta de activos físicos de la granja.
 

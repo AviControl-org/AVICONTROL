@@ -39,7 +39,7 @@
 
  ### User Story 2 - Rechazar alertas de mortalidad inválidas (Priority: P1)
 
- Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes para evitar descontar aves del lote equivocado o reducir la población por debajo de cero.
+ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes para evitar descontar pollos del lote equivocado o reducir la población por debajo de cero.
 
  **Independent Test**: Se pueden enviar alertas con datos faltantes, entidades inexistentes, relación lote-galpón inválida, estado incompatible o cantidades inválidas y verificar que la población del lote permanezca sin cambios.
 
@@ -133,7 +133,7 @@
 
  - **Registro técnico de procesamiento**: Control interno mínimo para impedir descuentos duplicados y detectar reutilización de UUID. No representa un historial funcional consultable.
 
- - **Lote**: Grupo de aves asociado actualmente a un galpón. Su población se actualiza exclusivamente mediante el spec “Actualizar población actual”.
+ - **Lote**: Grupo de pollos asociado actualmente a un galpón. Su población se actualiza exclusivamente mediante el spec “Actualizar población actual”.
 	- UUID único
 	- Población inicial, inmutable durante este flujo
 	- Población actual, valor que se reduce en el spec “Actualizar población actual”

@@ -6,7 +6,7 @@
 
 ### User Story 1 - Registro exitoso de un lote en galpón disponible (Priority: P1)
 
-Como administrado quiero poder registrar un nuevo lote de pollitos en un galpón. 
+Como administrado quiero poder registrar un nuevo lote de pollos en un galpón. 
 
 **Why this priority**: Es el siguiente paso crítico después de registrar un galpón. Sin lotes no hay producción que gestionar, y este caso de uso permite el inicio de la crianza, activando el ciclo operativo del galpón.
 
@@ -79,7 +79,7 @@ Como administrado quiero poder registrar un nuevo lote de pollitos en un galpón
 
 ### Key Entities
 
-- **Lote**: Representa un grupo de pollitos de engorde alojados en un galpón.
+- **Lote**: Representa un grupo de pollos de engorde alojados en un galpón.
   
    | Atributo | Tipo | Restricciones |
    |---|---|---|
@@ -99,7 +99,7 @@ Como administrado quiero poder registrar un nuevo lote de pollitos en un galpón
    |---|---|---|
    | ID | UUID | Único; se asigna al crear el galpón. |
    | Nombre | Texto | Único y obligatorio. |
-   | Aforo máximo | Entero positivo | Mayor que cero. |
+   | capacidad | Entero positivo | Mayor que cero. |
    | Estado | Enum | Disponible, Productivo, En cosecha, Vaciado sanitario, Mantenimiento o Aislamiento. |
 
 ## Success Criteria

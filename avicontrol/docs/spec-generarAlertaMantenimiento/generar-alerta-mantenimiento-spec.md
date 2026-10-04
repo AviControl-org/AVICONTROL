@@ -57,12 +57,12 @@ Como técnico de infraestructura identifico una falla en un galpón y necesito n
 - **FR-003**: El sistema DEBE validar que el galpón seleccionado exista y esté en estado "Disponible".
 - **FR-004**: El sistema DEBE requerir una descripción del problema, no vacía, con una longitud máxima de 500 caracteres.
 - **FR-005**: El sistema DEBE capturar automáticamente la fecha y hora de generación de la alerta.
-- **FR-007**: El sistema DEBE impedir la creación de más de una alerta activa (estado "Pendiente") por galpón.
-- **FR-008**: El sistema DEBE mostrar un mensaje de confirmación antes de persistir la alerta.
-- **FR-009**: Si el técnico confirma, el sistema DEBE crear la alerta con estado "Pendiente", sin cambiar el estado del galpón; la atención de la alerta DEBE remitir al spec "Actualizar estado" la transición de "Disponible" a "Mantenimiento".
-- **FR-010**: Si el técnico cancela, el sistema NO DEBE crear la alerta.
-- **FR-011**: El sistema DEBE almacenar las alertas en un historial accesible para el administrador.
-- **FR-012**: El sistema DEBE mostrar errores claros si la descripción está vacía, el galpón no es válido o ya existe una alerta activa.
+- **FR-006**: El sistema DEBE impedir la creación de más de una alerta activa (estado "Pendiente") por galpón.
+- **FR-007**: El sistema DEBE mostrar un mensaje de confirmación antes de persistir la alerta.
+- **FR-008**: Si el técnico confirma, el sistema DEBE crear la alerta con estado "Pendiente", sin cambiar el estado del galpón; la atención de la alerta DEBE remitir al spec "Actualizar estado" la transición de "Disponible" a "Mantenimiento".
+- **FR-009**: Si el técnico cancela, el sistema NO DEBE crear la alerta.
+- **FR-010**: El sistema DEBE almacenar las alertas en un historial accesible para el administrador.
+- **FR-011**: El sistema DEBE mostrar errores claros si la descripción está vacía, el galpón no es válido o ya existe una alerta activa.
 ### Key Entities
 
 - **Alerta de Mantenimiento**: Representa un aviso de falla de infraestructura generado por el técnico.

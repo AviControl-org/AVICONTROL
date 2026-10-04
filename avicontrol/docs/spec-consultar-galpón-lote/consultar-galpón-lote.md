@@ -6,7 +6,7 @@
 
  ### User Story 1 - Consultar el listado de galpones (Priority: P1)
 
- Como administrador u operario de granja, quiero consultar un listado de galpones para conocer rápidamente su nombre, aforo máximo y estado actual.
+ Como administrador u operario de granja, quiero consultar un listado de galpones para conocer rápidamente su nombre, capacidad y estado actual.
 
  **Why this priority**: El listado permite ubicar y supervisar los galpones disponibles antes de consultar la información detallada de sus lotes.
 
@@ -19,7 +19,7 @@
 	 - **When** el usuario ingresa a la consulta sin indicar un nombre
 	 - **Then** el sistema muestra todos los galpones aplicando una paginación de 10 registros
 	 - **And** los ordena por nombre ascendente
-	 - **And** muestra el nombre, aforo máximo y estado de cada galpón
+	 - **And** muestra el nombre, capacidad y estado de cada galpón
 
  2. **Scenario**: Búsqueda parcial por nombre
 	 - **Given** existen galpones registrados
@@ -45,7 +45,7 @@
  1. **Scenario**: Galpón referenciado por un lote
 	 - **Given** existe uno o más lotes cuya llave foránea referencia al galpón
 	 - **When** el usuario selecciona el galpón
-	 - **Then** el sistema muestra el nombre, aforo máximo y estado del galpón
+	 - **Then** el sistema muestra el nombre, capacidad y estado del galpón
 	 - **And** muestra el nombre del lote, población inicial, población actual, fecha de ingreso, edad en días y costo total
 	- **And** considera como lote activo el lote referenciado más recientemente por fecha de ingreso
 
@@ -113,15 +113,15 @@
  ### Functional Requirements
 
  - **FR-001**: El sistema DEBE permitir a administradores y operarios consultar los galpones registrados.
- - **FR-002**: El sistema DEBE mostrar en el listado el nombre, aforo máximo y estado de cada galpón.
+ - **FR-002**: El sistema DEBE mostrar en el listado el nombre, capacidad y estado de cada galpón.
  - **FR-003**: El sistema DEBE permitir buscar galpones mediante coincidencias parciales por nombre.
  - **FR-004**: El sistema DEBE mostrar todos los galpones cuando el usuario no ingrese un nombre de búsqueda.
  - **FR-005**: El sistema DEBE mostrar un mensaje cuando no existan coincidencias y, a continuación, mostrar todos los galpones.
  - **FR-006**: El sistema DEBE permitir filtrar el listado por estado del galpón.
- - **FR-007**: El sistema DEBE permitir ordenar el listado por nombre, aforo máximo y estado.
+ - **FR-007**: El sistema DEBE permitir ordenar el listado por nombre, capacidad y estado.
  - **FR-008**: El sistema DEBE mostrar 10 galpones por página y permitir navegar entre páginas.
  - **FR-009**: El sistema DEBE permitir abrir el detalle de un galpón desde el listado.
- - **FR-010**: El sistema DEBE mostrar en el detalle el nombre, aforo máximo y estado del galpón.
+ - **FR-010**: El sistema DEBE mostrar en el detalle el nombre, capacidad y estado del galpón.
  - **FR-011**: El sistema DEBE mostrar el UUID único del lote, su nombre, población inicial, población actual, fecha de ingreso, edad en días y costo total cuando exista un lote cuya llave foránea referencie al galpón consultado.
  - **FR-012**: El sistema DEBE calcular la edad del lote en días a partir de su fecha de ingreso y la fecha actual.
  - **FR-013**: El sistema DEBE considerar como lote activo el lote cuya llave foránea referencie al galpón consultado y tenga la fecha de ingreso más reciente.
@@ -140,10 +140,10 @@
  - **Galpón**: Representa una unidad física de producción avícola. No recibe ni almacena directamente lotes.
 	- UUID único
 	- Nombre
-	- Aforo máximo
-	- Estado: Disponible, vaciado sanitario, productivo, en cosecha, mantenimiento o aislamiento
+	- capacidad
+	- Estado: Disponible, Productivo, En cosecha, Vaciado sanitario, Mantenimiento o Aislamiento
 
- - **Lote**: Representa un grupo de aves registrado para un galpón.
+ - **Lote**: Representa un grupo de pollos registrado para un galpón.
     - UUID único
 	- Nombre
 	- Población inicial
