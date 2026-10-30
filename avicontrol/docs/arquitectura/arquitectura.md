@@ -68,29 +68,17 @@ infrastructure → application → domain
 
 ## Persistencia y transacciones
 
-- Flyway es la fuente de verdad para crear y modificar el esquema; Hibernate valida el esquema sin actualizarlo automáticamente.
+- Flyway es la fuente de verdad para crear y modificar el esquema; Hibernate valida el esquema sin actualizarlo automáticamente. El diagrama entidad-relación del Módulo 1 está en [plan-modulo-1.md](../plan-general/plan-modulo-1.md#modelo-de-datos).
 - Las restricciones de integridad se aplican en PostgreSQL y, cuando corresponda, en las reglas del dominio/aplicación.
 - Cada operación que escribe datos define su límite transaccional de acuerdo con el spec. Los cambios de estado, historiales y operaciones atómicas se coordinan mediante los casos de uso autorizados.
 - Se emplea bloqueo pesimista únicamente para validar y persistir cambios de estado concurrentes del mismo galpón.
+- El bloqueo optimista (`@Version` en galpón y lote) protege las ediciones normales (nombre, capacidad, población); el pesimista (`findByIdForUpdate`) protege solo los cambios de estado. No se mezclan en la misma operación sin justificarlo en el plan.
+- Las violaciones de índices únicos (nombre de galpón o lote, alerta de mantenimiento pendiente) las captura el adaptador de persistencia y las traduce a excepciones de dominio; ninguna excepción de JPA sale de `infrastructure/out`.
 
 ## API y tiempo
 
 - La API usa JSON y DTOs validados; no retorna entidades JPA.
-- Los errores REST utilizan `ProblemDetail` compatible con RFC 9457 y agregan errores de campo cuando aplica.
-- Cada error incluye un `code` estable para el cliente (por ejemplo `NOMBRE_DUPLICADO`, `GALPON_NO_ENCONTRADO`) y, cuando aplica, `fieldErrors` con `field`, `code` y `message`.
-- Mapeo general: `400` datos inválidos, `404` recurso inexistente, `409` conflicto de estado, nombre duplicado o concurrencia, `500` error técnico con mensaje genérico.
-
-```json
-{
-  "title": "Conflicto",
-  "status": 409,
-  "detail": "Ya existe un galpón con ese nombre",
-  "instance": "/api/v1/galpones",
-  "code": "NOMBRE_DUPLICADO",
-  "fieldErrors": [{ "field": "nombre", "code": "DUPLICADO", "message": "El nombre ya está en uso" }]
-}
-```
-
+- Los errores REST utilizan `ProblemDetail` compatible con RFC 9457 (`application/problem+json`) y agregan errores de campo cuando aplica. Los campos y el mapeo de estados están en [Convenciones de contrato](#convenciones-de-contrato).
 - Los campos enteros rechazan valores decimales.
 - Las reglas de fecha utilizan un `Clock` inyectado y la zona de negocio `America/Bogota`.
 
@@ -100,7 +88,86 @@ infrastructure → application → domain
 - MockMvc para validar rutas, payloads, errores y códigos HTTP.
 - Testcontainers PostgreSQL para repositorios, migraciones y restricciones de base de datos.
 - ArchUnit para validar la dirección de dependencias y el aislamiento del dominio.
+- Los JSON de ejemplo de cada plan viven como *fixtures* en `src/test/resources/contratos/` y son la evidencia de contrato: las pruebas MockMvc comparan contra ellos y las pruebas unitarias de los consumers los deserializan.
 - Por indicación del profesor, el proyecto no incluye pruebas de integración ni end-to-end. Los consumers Kafka y los jobs se prueban de forma unitaria con Mockito.
+
+## Convenciones de contrato
+
+Valen para todos los servicios REST y mensajes Kafka del Módulo 1. Los planes por spec no las repiten: solo definen rutas, campos, reglas y errores propios.
+
+| Regla | Detalle |
+| --- | --- |
+| Formato | JSON con `Content-Type: application/json`, UTF-8. |
+| Nombres | Campos en `camelCase`; enumeraciones en `MAYUSCULA_CON_GUION_BAJO`. |
+| Nulos | **Nunca se envía `null`**: un campo que no aplica se omite de la respuesta (`spring.jackson.default-property-inclusion=non_null`). En una petición, un campo ausente significa "no modificar" y un `null` explícito se trata igual que uno ausente (los records de Java no distinguen ambos casos); si tras eso no queda ningún campo, el `PATCH` responde `400 SIN_CAMBIOS`. |
+| Fechas | `date` como `yyyy-MM-dd`. Un instante completo va en ISO-8601 **con desplazamiento** (`2026-10-05T10:30:00-05:00`); nunca sin zona. Las reglas de "hoy" y "mismo día" se evalúan en `America/Bogota` con el `Clock` inyectado. |
+| Identificadores | UUID, siempre como texto. |
+| Números | Enteros sin decimales; `costoTotal` en pesos colombianos. Un decimal o un texto en un campo entero es `400` (`ACCEPT_FLOAT_AS_INT=false`). |
+| Paginación | `page` empieza en **1** (no en 0). Respuesta: `contenido`, `pagina`, `tamanio`, `totalElementos`, `totalPaginas`. El tamaño de página es fijo (10) salvo que el plan del servicio permita `size`. Una página sin resultados es `200` con `contenido: []` y `totalPaginas: 0`, nunca `404`. `size` solo existe en los listados que lo declaran (alertas de mantenimiento e historial de estados, por defecto 20, máximo 100). |
+| Ordenamiento | Parámetro `orden=campo,direccion` (`asc` o `desc`) solo donde el spec lo pide. |
+| Éxito | `POST` crea → `201` con `Location` y la representación creada. `PATCH` modifica → `200` con la representación actualizada. `GET` → `200`. |
+| Caché | Toda respuesta `GET` lleva `Cache-Control: no-store`: lo que se muestra es la foto del momento. |
+| Errores | RFC 9457. Ver la tabla siguiente. |
+
+### Formato de error
+
+Todo error responde `application/problem+json` con estos campos:
+
+| Campo | Contenido |
+| --- | --- |
+| `type` | `https://avicontrol.unimag.edu.co/errors/<slug>`, donde `<slug>` es el `code` en minúsculas y con guiones (`NOMBRE_DUPLICADO` → `nombre-duplicado`). Es un identificador estable, no una página que deba existir. |
+| `title` | Texto corto fijo por `code`. |
+| `status` | Código HTTP. |
+| `detail` | Mensaje fijo y claro para la persona; nunca expone excepciones ni SQL. |
+| `instance` | Ruta de la petición. |
+| `code` | Código estable para el cliente, en `MAYUSCULA_CON_GUION_BAJO`. |
+| `fieldErrors` | Opcional: lista de `{field, code, message}` en los `400` de validación y en el `409 NOMBRE_DUPLICADO` (señala `nombre`). Valores de `fieldErrors.code`: `OBLIGATORIO`, `LONGITUD_INVALIDA`, `FORMATO_INVALIDO`, `ENTERO_POSITIVO`, `VALOR_NO_PERMITIDO`, `MINIMO_1`, `FUERA_DE_RANGO`, `DUPLICADO`. |
+
+Mapeo general: `400` datos inválidos, `404` recurso inexistente, `409` conflicto de estado, nombre duplicado o concurrencia, `500` error técnico con `detail` genérico y sin cambios parciales.
+
+Si una petición falla en varios campos a la vez, `code` es `VALIDACION_FALLIDA` y cada error va en `fieldErrors` con su código específico; con un solo campo erróneo, `code` es el código específico del plan (por ejemplo `NOMBRE_INVALIDO`).
+
+Códigos genéricos que el manejador global produce en cualquier servicio, además de los de cada plan: `VALIDACION_FALLIDA` (varios campos inválidos), `CUERPO_INVALIDO` (el body no es un JSON válido), `PARAMETRO_INVALIDO` (UUID o número mal formado en la ruta o en un query param; `fieldErrors` nombra el parámetro), `CONFLICTO_CONCURRENCIA` (`409`, choque del `@Version`), `SOLICITUD_NO_SOPORTADA` (ruta, método o tipo de contenido que Spring MVC no soporta; conserva el status de Spring), `ERROR_CONSULTA` (`500` en un `GET`) y `ERROR_INTERNO` (`500` en una escritura).
+
+```json
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/nombre-duplicado",
+  "title": "Nombre duplicado",
+  "status": 409,
+  "detail": "Ya existe un galpón con ese nombre.",
+  "instance": "/api/v1/galpones",
+  "code": "NOMBRE_DUPLICADO",
+  "fieldErrors": [{ "field": "nombre", "code": "DUPLICADO", "message": "El nombre ya está en uso" }]
+}
+```
+
+Los `code`, `title` y `detail` de cada servicio están en la tabla *Textos fijos de error* de su plan. Una consulta sin resultados no es error. Los errores técnicos (`ERROR_INTERNO`, `ERROR_CONSULTA`) siempre responden `500` con `detail` genérico.
+
+### Estructura de carpetas
+
+Cada plan por spec trae el código propio de su caso de uso y, por cada petición o mensaje, todos sus escenarios con path params, query params, body y respuesta.
+
+```text
+src/main/java/com/unimag/avicontrol/
+├── domain/{model,policy,exception,port/out}
+├── application/{port/in,usecase}
+└── infrastructure/{in/rest,in/kafka,in/job,out/persistence,config,local}
+src/main/resources/db/{migration,local}
+src/test/java/com/unimag/avicontrol/{domain,application,infrastructure,arquitectura,soporte}
+src/test/resources/contratos/
+```
+
+`infrastructure/local` y `db/local` existen solo para el perfil `local` (ver *Perfil local*).
+
+## Perfil local
+
+El perfil `local` permite desarrollar y hacer la demostración sin el Módulo 2:
+
+- `docker-compose.yml` levanta PostgreSQL y Kafka.
+- `application-local.properties` activa `db/local` en Flyway con datos de ejemplo (galpones en distintos estados y un lote activo).
+- `SimuladorModulo2` (solo con el perfil `local`) publica en los tres tópicos los mismos JSON de los *fixtures*, para ver cómo reacciona el Módulo 1 sin depender de que el otro grupo tenga su módulo listo.
+
+El simulador es una herramienta de demostración; no es una prueba de integración y no se ejecuta en `mvnw test`.
 
 ## Comunicación entre módulos
 
@@ -126,6 +193,18 @@ AVICONTROL es un sistema multi-módulo. La comunicación entre módulos sigue es
 
 Los nombres de tópico son los de esta tabla. El esquema JSON de cada mensaje y la política de reintentos se definen en el plan del spec que lo consume.
 
+### Sobre de eventos
+
+El Módulo 2 define un sobre estándar para sus eventos de integración. Propuesta del Módulo 1 (pendiente P-06): el consumer lee el sobre y toma del `payload` los campos del mensaje; los demás campos del sobre se ignoran, salvo `eventType` y `eventVersion`.
+
+| Campo del sobre | Uso en el Módulo 1 |
+| --- | --- |
+| `eventId`, `occurredAt`, `publishedAt`, `producer`, `correlationId`, `causationId`, `aggregateType`, `aggregateId` | Se ignoran (solo informativos o para el log). `eventId` identifica la entrega, no sustituye al UUID de alerta. |
+| `eventType`, `eventVersion` | Se valida que correspondan al tópico y que la versión sea `1`; otro valor se rechaza. Los valores exactos de `eventType` se acuerdan con el Módulo 2. |
+| `payload` | Contiene los campos de negocio que define cada plan (por ejemplo `alertaId`, `galponId`...). El JSON de ejemplo de cada plan es este `payload`. |
+
+El consumer ignora campos desconocidos para tolerar evolución del contrato. La idempotencia usa siempre el `alertaId` del `payload`.
+
 ### Reglas de los adaptadores Kafka
 
 - Los consumers Kafka pertenecen a `infrastructure/in/kafka/` y no contienen reglas de negocio.
@@ -135,7 +214,7 @@ Los nombres de tópico son los de esta tabla. El esquema JSON de cada mensaje y 
 
 ## Convenciones para los planes de implementación
 
-Cada spec tiene su propio plan en su carpeta (`docs/spec-<caso-de-uso>/plan-<caso-de-uso>.md`). `plan-modulo-1.md` contiene solo lo compartido: contexto del módulo, Setup, Foundational, índice de planes por spec, dependencias y preguntas abiertas.
+Cada spec tiene su propio plan en su carpeta (`docs/spec-<caso-de-uso>/plan-<caso-de-uso>.md`). `plan-modulo-1.md` contiene solo lo compartido: contexto del módulo, Setup, Foundational, catálogo de servicios, índice de planes por spec, dependencias y Polish. Las preguntas abiertas llevan un ID (`P-nn`) que cada plan cita en su sección *Pendientes de clarificación*.
 
 Todo plan por spec debe incluir al inicio:
 
@@ -149,13 +228,26 @@ Los planes por spec no deben repetir:
 
 - La lista de tecnologías ni la explicación de la arquitectura hexagonal.
 - Las reglas generales de persistencia, API, tiempo, pruebas o Kafka.
+- Las convenciones de contrato (formato, nulos, fechas, paginación, formato de error).
 - Las tareas de Setup y Foundational del plan general.
 
-Cada plan se limita a:
+Secciones de cada plan, en este orden:
 
-- Resumen del spec cubierto.
-- Contexto, restricciones e integraciones propias del caso de uso.
-- Clases y adaptadores propios.
-- Tareas de pruebas e implementación, con la numeración del plan general.
-- Dependencias con otros specs.
-- Decisiones pendientes que la arquitectura no cubre.
+1. **Summary** y **Enfoque técnico** (pasos numerados de cómo funciona el caso de uso).
+2. **Contexto específico**: tareas previas del plan general.
+3. **Estructura del proyecto**: árbol con la ruta exacta de cada archivo que crea o ajusta el plan, y de sus pruebas.
+4. **Decisiones de diseño**: reglas, concurrencia, índices o algoritmos que el spec no fija.
+5. **Contrato**: por servicio, request/response DTO, path params, query params, body y errores; *Textos fijos de error* con un ejemplo JSON de error.
+6. **Fuera de alcance**.
+7. **Coherencia entre módulos** (solo en los specs compartidos con otros módulos).
+8. **Fixtures**: archivos JSON de `src/test/resources/contratos/` que usa el plan.
+9. **Tareas**: Goal, Independent Test, pruebas e implementación. Cada tarea cita el FR, SC o caso límite del spec que cubre.
+10. **Dependencias** y **Pendientes de clarificación** (IDs `P-nn`).
+
+## Coherencia con los otros módulos
+
+Los specs de consultar galpón y lote, recibir mortalidad, recibir alerta sanitaria y recibir vaciado sanitario son la frontera con los Módulos 2 y 3. Para que ambos lados coincidan:
+
+- Los nombres de campo, los seis valores de `EstadoGalpon`, los formatos (UUID y fechas como texto, zona America/Bogota) y las reglas de negocio compartidas (lote activo, edad del lote) se escriben una sola vez en el plan del spec y se comparten con el otro grupo como contrato.
+- Los mensajes Kafka incluyen un JSON de ejemplo en el plan del spec (el `payload` del [sobre de eventos](#sobre-de-eventos)). El consumer ignora campos desconocidos y la idempotencia usa el UUID de negocio de la alerta.
+- Las diferencias con los planes del Módulo 2 (`aforoMaximo` frente a `capacidad`, sobre de eventos, rutas sin versión, proceso único frente a procesos separados) quedan registradas como pendientes de clarificación (P-06, P-09, P-10, P-11) hasta acordarlas con los otros grupos.

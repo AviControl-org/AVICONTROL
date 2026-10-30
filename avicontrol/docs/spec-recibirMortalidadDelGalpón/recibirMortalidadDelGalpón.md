@@ -6,11 +6,11 @@
 
  ### User Story 1 - Recibir una alerta válida de mortalidad (Priority: P1)
 
- Como administrador, quiero recibir una alerta enviada por el Módulo 2 con la cantidad de pollos retirados por muerte para remitirla al proceso de actualización de la población actual del lote activo asociado al galpón.
+ Como sistema AVICONTROL, quiero recibir una alerta enviada por el Módulo 2 con la cantidad de pollos retirados por muerte para remitirla al proceso de actualización de la población actual del lote activo asociado al galpón.
 
  **Why this priority**: La alerta debe llegar al proceso responsable de actualizar la población actual, conservando la separación entre la recepción del evento y la modificación del lote.
 
- **Independent Test**: Se puede enviar una alerta válida para un galpón productivo con un lote activo y verificar que el administrador la reciba, que sea validada y que se remita al spec “Actualizar población actual” con los datos correctos.
+ **Independent Test**: Se puede enviar una alerta válida para un galpón productivo con un lote activo y verificar que el sistema la reciba, que sea validada y que se remita al spec “Actualizar población actual” con los datos correctos.
 
  **Acceptance Scenarios**:
 

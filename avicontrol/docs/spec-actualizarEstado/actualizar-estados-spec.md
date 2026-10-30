@@ -20,8 +20,9 @@ Todo cambio de estado del galpón DEBE ser remitido a este spec, sin importar si
 
 1. **Scenario**: Transición de Disponible a Mantenimiento (al atender una alerta)
    - **Given** un galpón en estado "Disponible" con una alerta de mantenimiento pendiente
-   - **When** el administrador atiende la alerta de mantenimiento desde la bandeja de alertas
+   - **When** el administrador atiende la alerta de mantenimiento desde la bandeja de alertas y confirma
    - **Then** el sistema remite a este spec la solicitud de transición a "Mantenimiento", el galpón pasa a "Mantenimiento", se registra en historial y se muestra mensaje de éxito
+   - **And** la alerta de mantenimiento queda en estado "Atendida"
 
 2. **Scenario**: Solicitud sanitaria de Productivo a Aislamiento
    - **Given** un galpón en estado "Productivo" con un lote activo
@@ -90,7 +91,7 @@ Todo cambio de estado del galpón DEBE ser remitido a este spec, sin importar si
 - **FR-003**: El sistema DEBE validar que la transición solicitada esté permitida y que el origen tenga autorización para ella antes de persistir el cambio.
 - **FR-004**: El sistema DEBE rechazar solicitudes manuales de **Disponible** a **Productivo**; esa transición solo puede ser remitida por el spec de registro de lote después de crear correctamente el lote.
 - **FR-005**: El sistema DEBE impedir la transición directa de **Aislamiento** a **Vaciado sanitario**; el camino correcto es Aislamiento → En cosecha (administrador) y luego En cosecha → Vaciado sanitario.
-- **FR-006**: Antes de guardar un cambio solicitado directamente por el administrador, el sistema DEBE mostrar un mensaje de confirmación ("¿Estás seguro de actualizar el estado?"). Las solicitudes provenientes de otros specs DEBEN incluir la autorización definida por su flujo de origen; las solicitudes del módulo 1 por alertas sanitarias se consideran autorizadas después de la validación de la alerta recibida del módulo 2 y no requieren una confirmación manual adicional.
+- **FR-006**: Antes de guardar un cambio solicitado directamente por el administrador, incluida la atención de una alerta de mantenimiento, el sistema DEBE mostrar un mensaje de confirmación ("¿Estás seguro de actualizar el estado?"). Las solicitudes provenientes de otros specs DEBEN incluir la autorización definida por su flujo de origen; las solicitudes del módulo 1 por alertas sanitarias se consideran autorizadas después de la validación de la alerta recibida del módulo 2 y no requieren una confirmación manual adicional.
 - **FR-007**: Si la solicitud es válida y, cuando corresponda, está confirmada, este spec DEBE actualizar el estado del galpón.
 - **FR-008**: El sistema DEBE registrar en el historial de cambios: identificador del galpón, estado anterior, estado nuevo, timestamp y origen de la solicitud. Para alertas sanitarias, el origen debe ser "alerta sanitaria / módulo 2". *(Usuario pendiente, se omite por autenticación no especificada)*
 - **FR-009**: Tras una actualización manual exitosa, el sistema DEBE redirigir al listado de galpones y mostrar mensaje de éxito. Para solicitudes provenientes de otros specs, debe devolver el resultado del procesamiento al spec solicitante.
@@ -103,7 +104,7 @@ Todo cambio de estado del galpón DEBE ser remitido a este spec, sin importar si
 
 - **Galpón**: Entidad existente con atributo **Estado actual** que cambia según las reglas.
 - **Historial de Cambios de Estado**: Registro de transiciones de estado.
-   - Atributos: ID, Galpón ID (FK), Estado anterior, Estado nuevo, Timestamp, Origen de la solicitud.
+   - Atributos: ID, `galpon_id` (FK), Estado anterior, Estado nuevo, Timestamp, Origen de la solicitud.
 
 ## Success Criteria
 

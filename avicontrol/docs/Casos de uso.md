@@ -17,7 +17,7 @@ Este documento explica brevemente los casos de uso encontrados en el diagrama, d
 ### 1. Administrador
 - **Registrar galpón**: En este caso de uso el administrador ocupa llenar un formulario donde ingresa los datos necesarios del galpón (nombre y capacidad).
 
-- **Registrar Lote**: En este caso de uso el administrador ocupa llenar un formulario donde ingresa los datos necesarios del lote (nombre, fecha de ingreso, población inicial y el costo del lote).
+- **Registrar Lote**: En este caso de uso el administrador ocupa llenar un formulario donde ingresa los datos necesarios del lote (nombre, fecha de ingreso, población inicial y el costo total).
 
 - **Editar galpón**: En este caso de uso el administrador ocupa editar el galpón en caso de que sea ampliado o necesite un cambio de nombre.
 
@@ -52,4 +52,4 @@ Este documento explica brevemente los casos de uso encontrados en el diagrama, d
 	1. **Administrador**: Ocupa visualizar los galpones y lotes activos en el sistema.
 	2. **Operario de granja**: Ocupa visualizar los galpones y lotes activos para supervisar la situación operativa de la granja.
 	3. **Módulo 2**: Ocupa visualizar los galpones y lotes activos para conocer la edad del lote para el control de la dieta de los pollos.
-	4. **Módulo 3**: Ocupa visualizar los galpones y lotes activos para conocer el costo del lote y los pollos finales para poder calcular los costos de crianza y la venta bruta del lote. 
+	4. **Módulo 3**: Ocupa visualizar los galpones y lotes activos para conocer el costo total del lote y los pollos finales para poder calcular los costos de crianza y la venta bruta del lote. 

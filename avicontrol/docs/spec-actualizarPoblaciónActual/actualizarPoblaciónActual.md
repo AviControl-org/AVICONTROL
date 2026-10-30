@@ -6,7 +6,7 @@
 
  ### User Story 1 - Actualizar la población actual del lote (Priority: P1)
 
- Como administrador, quiero actualizar la población actual de un lote a partir de la cantidad de pollos retirados por muerte recibida en una alerta, para mantener disponible el número real de pollos del lote.
+ Como sistema AVICONTROL, quiero actualizar la población actual de un lote a partir de la cantidad de pollos retirados por muerte recibida en una alerta, para mantener disponible el número real de pollos del lote.
 
  **Why this priority**: La población actual es un dato operativo del lote y debe disminuir cada vez que se confirma una mortalidad. La población inicial debe permanecer como referencia histórica del registro original.
 
@@ -16,7 +16,7 @@
 
  1. **Scenario**: Actualización exitosa por mortalidad
 	 - **Given** existe un lote activo con población inicial de 1200 y población actual de 1000
-	 - **When** el administrador recibe del spec “Recibir mortalidad del galpón” una solicitud válida con 25 pollos muertos
+	 - **When** el sistema recibe del spec “Recibir mortalidad del galpón” una solicitud válida con 25 pollos muertos
 	 - **Then** el sistema calcula `población actual nueva = población actual anterior - cantidad de muertos`
 	 - **And** actualiza la población actual del lote a 975
 	 - **And** conserva la población inicial en 1200
@@ -24,21 +24,21 @@
 
  2. **Scenario**: Población actual queda exactamente en cero
 	 - **Given** el lote tiene una población actual de 25
-	 - **When** el administrador recibe una solicitud válida con 25 pollos muertos
+	 - **When** el sistema recibe una solicitud válida con 25 pollos muertos
 	 - **Then** el sistema actualiza la población actual a cero
 	 - **And** no cambia automáticamente el estado del galpón
 	 - **And** queda pendiente la orden independiente de vaciado sanitario
 
  3. **Scenario**: Varias actualizaciones consecutivas
 	 - **Given** el lote tiene una población actual de 1000
-	 - **When** el administrador procesa sucesivamente solicitudes válidas de 25 y 10 pollos muertos
+	 - **When** el sistema procesa sucesivamente solicitudes válidas de 25 y 10 pollos muertos
 	 - **Then** la población actual queda en 965
 	 - **And** cada solicitud se calcula usando la población actual vigente anterior
 	 - **And** la población inicial permanece sin cambios
 
  ### User Story 2 - Rechazar actualizaciones inválidas (Priority: P1)
 
- Como administrador, quiero que se rechacen solicitudes inconsistentes para evitar que la población actual del lote sea incorrecta o negativa.
+ Como sistema AVICONTROL, quiero que se rechacen solicitudes inconsistentes para evitar que la población actual del lote sea incorrecta o negativa.
 
  **Independent Test**: Se pueden enviar solicitudes con un lote inexistente, un lote no activo, cantidades inválidas o cantidades superiores a la población actual y verificar que el lote no cambie.
 
@@ -46,25 +46,25 @@
 
  1. **Scenario**: Lote inexistente
 	 - **Given** la solicitud identifica un lote que no existe
-	 - **When** el administrador intenta procesarla
+	 - **When** el sistema intenta procesarla
 	 - **Then** el sistema rechaza la solicitud
 	 - **And** no modifica ningún lote
 
  2. **Scenario**: Cantidad de muertos inválida
 	 - **Given** la cantidad recibida es cero, negativa, decimal o no numérica
-	 - **When** el administrador intenta procesarla
+	 - **When** el sistema intenta procesarla
 	 - **Then** el sistema rechaza la solicitud
 	 - **And** conserva la población actual y la población inicial sin cambios
 
  3. **Scenario**: Cantidad mayor que la población actual
 	 - **Given** el lote tiene una población actual de 100 y la solicitud informa 101 muertos
-	 - **When** el administrador intenta procesarla
+	 - **When** el sistema intenta procesarla
 	 - **Then** el sistema rechaza la solicitud
 	 - **And** no permite que la población actual sea negativa
 
  4. **Scenario**: Solicitud duplicada
 	 - **Given** una solicitud con UUID de alerta ya actualizó el lote correctamente
-	 - **When** el administrador recibe nuevamente la misma solicitud
+	 - **When** el sistema recibe nuevamente la misma solicitud
 	 - **Then** el sistema no vuelve a descontar la cantidad de muertos
 	 - **And** conserva la población actual resultante del primer procesamiento
 
@@ -92,7 +92,7 @@
 
  ### Functional Requirements
 
- - **FR-001**: El sistema DEBE permitir al administrador actualizar la población actual de un lote mediante una solicitud remitida por el spec “Recibir mortalidad del galpón”.
+ - **FR-001**: El sistema DEBE actualizar la población actual de un lote mediante una solicitud remitida por el spec “Recibir mortalidad del galpón”.
  - **FR-002**: La solicitud DEBE contener el UUID de la alerta, UUID del lote, UUID del galpón y cantidad de pollos muertos.
  - **FR-003**: El sistema DEBE validar que exista el lote identificado.
  - **FR-004**: El sistema DEBE validar que el lote sea activo y que su `galpon_id` corresponda al UUID del galpón recibido.
@@ -134,7 +134,6 @@
 
  - **Galpón**: Unidad física relacionada con el lote. Su estado no se modifica en este caso de uso.
 
- - **Administrador**: Actor responsable de recibir y procesar la solicitud de actualización.
 
  ## Success Criteria
 

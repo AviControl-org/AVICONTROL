@@ -38,16 +38,16 @@
 
  **Why this priority**: La relación entre el galpón y el lote permite consultar la población y los datos económicos necesarios para el control de la producción.
 
- **Independent Test**: Se puede probar seleccionando un galpón del listado y verificando que el sistema muestre sus datos y los del lote más reciente cuya llave foránea referencia a ese galpón.
+ **Independent Test**: Se puede probar seleccionando un galpón del listado y verificando que el sistema muestre sus datos y los de su lote activo (no desvinculado), cuya llave foránea referencia a ese galpón.
 
  **Acceptance Scenarios**:
 
  1. **Scenario**: Galpón referenciado por un lote
-	 - **Given** existe uno o más lotes cuya llave foránea referencia al galpón
+	 - **Given** existe un lote activo (no desvinculado) cuya llave foránea referencia al galpón
 	 - **When** el usuario selecciona el galpón
 	 - **Then** el sistema muestra el nombre, capacidad y estado del galpón
 	 - **And** muestra el nombre del lote, población inicial, población actual, fecha de ingreso, edad en días y costo total
-	- **And** considera como lote activo el lote referenciado más recientemente por fecha de ingreso
+	- **And** considera como lote activo el lote que referencia al galpón y no ha sido desvinculado
 
  2. **Scenario**: Galpón sin lotes que lo referencien
 	 - **Given** existe un galpón que no es referenciado por ningún lote
@@ -59,6 +59,12 @@
 	 - **Given** existen un lote activo y lotes anteriores cuya llave foránea referencia al galpón
 	 - **When** el usuario consulta el historial
 	- **Then** el sistema muestra el lote activo y los lotes anteriores que referencian al galpón
+
+ 4. **Scenario**: Galpón sin lote activo pero con historial
+	 - **Given** existe un galpón cuyos lotes referenciados fueron todos desvinculados
+	 - **When** el usuario consulta su detalle
+	 - **Then** el sistema muestra los datos del galpón sin lote activo
+	 - **And** permite consultar el historial con los lotes anteriores, del más reciente al más antiguo
 
  ### User Story 3 - Gestionar resultados y errores de consulta (Priority: P2)
 
@@ -102,7 +108,7 @@
  - Si se intenta registrar un lote con un UUID ya utilizado, el sistema debe rechazar el registro e informar que el UUID debe ser único.
  - Si un lote no tiene un UUID válido, el sistema no debe mostrarlo como un lote consultable y debe informar una inconsistencia de datos.
  - La entidad galpón no debe recibir ni almacenar directamente un lote; la consulta debe obtener los lotes mediante la llave foránea almacenada en lote.
- - Si un galpón es referenciado por varios lotes históricos, el sistema debe mostrar el lote con fecha de ingreso más reciente como activo y los demás en el historial.
+ - Si un galpón es referenciado por varios lotes históricos, el sistema debe mostrar como activo el lote que no ha sido desvinculado y los demás en el historial, del más reciente al más antiguo.
  - Si ningún lote referencia al galpón, el sistema debe mostrar los datos del galpón y un mensaje indicando que no existen lotes registrados para él.
  - Si un campo del lote está vacío o es inválido, el sistema debe mostrar “No disponible” en ese campo y continuar mostrando los datos válidos.
  - Si el galpón consultado no existe al abrir el detalle, el sistema debe mostrar un mensaje específico, no presentar datos de otro galpón y permitir volver al listado.
@@ -124,7 +130,7 @@
  - **FR-010**: El sistema DEBE mostrar en el detalle el nombre, capacidad y estado del galpón.
  - **FR-011**: El sistema DEBE mostrar el UUID único del lote, su nombre, población inicial, población actual, fecha de ingreso, edad en días y costo total cuando exista un lote cuya llave foránea referencie al galpón consultado.
  - **FR-012**: El sistema DEBE calcular la edad del lote en días a partir de su fecha de ingreso y la fecha actual.
- - **FR-013**: El sistema DEBE considerar como lote activo el lote cuya llave foránea referencie al galpón consultado y tenga la fecha de ingreso más reciente.
+ - **FR-013**: El sistema DEBE considerar como lote activo el lote cuya llave foránea referencie al galpón consultado y que no haya sido desvinculado (`desvinculado_en` nulo).
  - **FR-014**: El sistema DEBE permitir consultar el historial de lotes cuya llave foránea referencie al galpón consultado.
  - **FR-015**: El sistema DEBE informar cuando ningún lote referencie al galpón consultado.
  - **FR-016**: El sistema DEBE mostrar “No disponible” cuando un campo del lote esté vacío o sea inválido.
@@ -151,6 +157,7 @@
 	- Fecha de ingreso
 	- Costo total
 	- Llave foránea del galpón para el cual fue registrado
+	- Fecha y hora de desvinculación (`desvinculado_en`): nula mientras el lote está activo
 
  - **Administrador de granja**: Usuario autorizado para consultar la información de galpones y lotes.
 
@@ -163,7 +170,7 @@
  - **SC-001**: El 100 % de los galpones registrados debe poder aparecer en el listado de consulta.
  - **SC-002**: El 100 % de las búsquedas parciales debe devolver todos los galpones coincidentes.
  - **SC-003**: El 100 % de los detalles consultados debe mostrar correctamente los atributos del galpón seleccionado.
- - **SC-004**: El 100 % de los galpones referenciados por uno o más lotes debe mostrar la información disponible, incluido el UUID único, del lote más reciente.
+ - **SC-004**: El 100 % de los galpones referenciados por uno o más lotes debe mostrar la información disponible, incluido el UUID único, del lote activo.
  - **SC-005**: El 100 % de los galpones no referenciados por un lote debe mostrar un mensaje informativo sin impedir la consulta de sus datos.
  - **SC-006**: El 100 % de las respuestas con campos faltantes debe mostrar “No disponible” en lugar de datos incorrectos.
  - **SC-007**: El 100 % de los errores de consulta debe mostrar un mensaje específico, conservar los criterios y permitir reintentar.

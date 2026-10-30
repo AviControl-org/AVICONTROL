@@ -39,6 +39,12 @@ Como técnico de infraestructura identifico una falla en un galpón y necesito n
    - **When** en el mensaje de confirmación selecciona "Cancelar"
    - **Then** el sistema descarta los datos, no crea la alerta y permanece en el formulario o regresa sin cambios.
 
+6. **Scenario**: Consulta de la bandeja de alertas por el administrador
+   - **Given** existen alertas de mantenimiento en estado "Pendiente" y alertas en estado "Atendida"
+   - **When** el administrador abre la bandeja de alertas
+   - **Then** el sistema muestra las alertas pendientes con galpón, descripción, tipo y severidad (cuando fueron informados), fecha/hora y estado, con la acción de atenderlas
+   - **And** muestra aparte el historial de alertas atendidas, sin acción de atención
+
 ---
 
 ### Edge Cases
@@ -66,7 +72,7 @@ Como técnico de infraestructura identifico una falla en un galpón y necesito n
 ### Key Entities
 
 - **Alerta de Mantenimiento**: Representa un aviso de falla de infraestructura generado por el técnico.
-  - Atributos: ID (UUID), Galpón ID (FK), Descripción (texto), Fecha/hora (timestamp), Técnico (identificador), Estado (Pendiente, Atendida, Eliminada), Severidad (opcional), Tipo (opcional).
+  - Atributos: ID (UUID), `galpon_id` (FK), Descripción (texto), Fecha/hora (timestamp), Técnico (identificador), Estado (Pendiente, Atendida, Eliminada), Severidad (opcional), Tipo (opcional).
   - Relaciones: Pertenece a un Galpón (muchos a uno). Un galpón solo puede tener una alerta activa a la vez.
 
 ## Success Criteria

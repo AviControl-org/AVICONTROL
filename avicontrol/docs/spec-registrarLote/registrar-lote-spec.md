@@ -74,7 +74,7 @@ Como administrado quiero poder registrar un nuevo lote de pollos en un galpón.
 - **FR-010**: Al registrar exitosamente el lote, el sistema DEBE remitir al spec "Actualizar estado" la solicitud de transición de "Disponible" a "Productivo"; no debe actualizar directamente el estado del galpón.
 - **FR-011**: El sistema DEBE asignar un UUID único al lote al crearlo.
 - **FR-012**: El sistema DEBE persistir el lote y remitir la solicitud de cambio de estado de forma atómica; la actualización del estado DEBE ser ejecutada por el spec "Actualizar estado".
-- **FR-013**: Tras el registro exitoso, el sistema DEBE redirigir al administrador al listado de lotes, mostrando el lote recién creado.
+- **FR-013**: Tras el registro exitoso, el sistema DEBE redirigir al administrador al listado de lotes, que incluye todos los lotes registrados (activos y anteriores) con su condición, ordenados del ingreso más reciente al más antiguo, mostrando el lote recién creado.
 - **FR-014**: El sistema DEBE mostrar mensajes de error claros si el nombre está duplicado, la fecha es futura, la población inicial o el costo total no son enteros positivos, o el galpón no está disponible.
 
 ### Key Entities
@@ -86,12 +86,13 @@ Como administrado quiero poder registrar un nuevo lote de pollos en un galpón.
    | UUID único | UUID | Se asigna automáticamente al crear el lote. |
    | Nombre | Texto | Único, obligatorio, máximo 100 caracteres. |
    | Población inicial | Entero positivo | Mayor que cero. |
-   | Población actual | Entero positivo | Se inicializa con el valor de Población inicial. |
+   | Población actual | Entero no negativo | Se inicializa con el valor de Población inicial (positivo); puede llegar a 0 mediante "Actualizar población actual". |
    | Fecha de ingreso | Fecha | No puede ser futura. |
    | Costo total | Entero positivo | En pesos colombianos, sin decimales. |
    | Llave foránea del galpón (`galpon_id`) | UUID | Obligatoria; referencia al galpón para el cual fue registrado. |
+   | Fecha y hora de desvinculación (`desvinculado_en`) | Fecha y hora | Opcional; nula mientras el lote está activo. La registra el spec "Recibir vaciado sanitario" y no elimina `galpon_id`. |
 
-  - Relaciones: Pertenece a un Galpón (muchos a uno, pero un galpón solo puede tener un lote activo a la vez).
+  - Relaciones: Pertenece a un Galpón (muchos a uno, pero un galpón solo puede tener un lote activo a la vez; es lote activo el que no tiene fecha de desvinculación).
 
 - **Galpón**: Entidad existente que cambia de estado al registrar un lote.
 
