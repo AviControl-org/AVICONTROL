@@ -20,7 +20,7 @@ Como sistema AVICONTROL, quiero recibir una alerta emitida por el Módulo 2 para
 	- **Then** el sistema valida que el galpón y el lote existan y estén relacionados
 	- **And** registra la alerta aceptada
 	- **And** conserva en la alerta los UUID del lote y del galpón como referencia histórica
-	- **And** elimina la relación activa del lote con el galpón
+	- **And** registra la desvinculación del lote (fecha y hora) conservando su llave foránea al galpón
 	- **And** remite al spec “Actualizar estado” la solicitud autorizada de transición a “Vaciado sanitario”
 
 2. **Scenario**: Recepción repetida de la misma alerta
@@ -73,7 +73,7 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
 - Si falla el registro de la alerta, la desvinculación o el cambio de estado, el sistema debe revertir toda la operación.
 - Si el periodo configurable no está definido, el sistema no debe ejecutar automáticamente la transición a “Disponible” y debe reportar la configuración faltante.
 - La fecha y hora del evento debe corresponder al día en que se recibe la alerta; una fecha futura o de otro día debe rechazarse.
-- La desvinculación activa no debe eliminar los UUID del lote y del galpón registrados en la alerta.
+- La desvinculación no debe eliminar la llave foránea del lote ni los UUID del lote y del galpón registrados en la alerta.
 - Las alertas rechazadas no deben persistirse como alertas aceptadas.
 
 ## Requirements *(mandatory)*
@@ -87,7 +87,7 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
 - **FR-005**: El sistema DEBE validar que exista el lote identificado y que su llave foránea corresponda al galpón recibido.
 - **FR-006**: El sistema DEBE aceptar la alerta únicamente cuando el galpón esté en estado “En cosecha”.
 - **FR-007**: Al aceptar la alerta, el sistema DEBE remitir al spec “Actualizar estado” la transición de “En cosecha” a “Vaciado sanitario”.
-- **FR-008**: Al aceptar la alerta, el sistema DEBE eliminar la relación activa del lote con el galpón.
+- **FR-008**: Al aceptar la alerta, el sistema DEBE registrar la desvinculación del lote (`desvinculado_en`) sin eliminar su llave foránea al galpón; el lote deja de ser el lote activo del galpón.
 - **FR-009**: El sistema DEBE conservar en la alerta aceptada los UUID del lote y del galpón asociados durante la cosecha.
 - **FR-010**: El sistema DEBE registrar la alerta aceptada con sus identificadores, fecha y hora del evento y fecha y hora de recepción.
 - **FR-011**: El registro de la alerta, la desvinculación del lote y la solicitud al spec “Actualizar estado” DEBEN ejecutarse dentro de una única transacción atómica; este spec no debe persistir directamente el estado.
@@ -113,9 +113,9 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
   - UUID
   - Nombre
   - Estado
-  - Aforo máximo
+  - capacidad
 
-- **Lote**: Grupo de aves registrado para un galpón.
+- **Lote**: Grupo de pollos registrado para un galpón.
 	- UUID único
 	- Nombre
 	- Población inicial
@@ -123,6 +123,7 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
 	- Fecha de ingreso
 	- Costo total
 	- Llave foránea del galpón para el cual fue registrado
+	- Fecha y hora de desvinculación (`desvinculado_en`): nula mientras el lote está activo
 
 - **Módulo 2**: Actor externo que emite la alerta al finalizar la cosecha.
 
@@ -131,7 +132,7 @@ Como sistema AVICONTROL, quiero rechazar alertas incompletas o inconsistentes pa
 ### Measurable Outcomes
 
 - **SC-001**: El 100 % de las alertas válidas debe remitir al spec “Actualizar estado” una solicitud de transición a “Vaciado sanitario”.
-- **SC-002**: El 100 % de las alertas válidas debe desvincular la relación activa del lote y conservar los UUID del lote y del galpón en la alerta.
+- **SC-002**: El 100 % de las alertas válidas debe registrar la desvinculación del lote y conservar los UUID del lote y del galpón en la alerta.
 - **SC-003**: El 100 % de las alertas repetidas debe procesarse sin registros ni transiciones duplicadas.
 - **SC-004**: El 100 % de las alertas inválidas debe dejar sin cambios el galpón y el lote.
 - **SC-005**: El 100 % de las operaciones aceptadas debe ser atómica, sin registros de alerta aceptada asociados a transiciones incompletas.

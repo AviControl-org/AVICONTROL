@@ -93,7 +93,7 @@ Como administrador necesito ajustar la capacidad de un galpón.
 
 - **Galpón**: Entidad existente con atributos: ID, Nombre, Capacidad, Estado actual.
 - **Historial de Cambios** (nueva entidad): Registro de modificaciones sobre el galpón.
-  - Atributos: ID (UUID), Galpón ID (FK), Campo modificado (ej. "nombre", "capacidad"), Valor anterior, Valor nuevo, Timestamp.
+  - Atributos: ID (UUID), `galpon_id` (FK), Campo modificado (ej. "nombre", "capacidad"), Valor anterior, Valor nuevo, Timestamp.
 
 ## Success Criteria
 

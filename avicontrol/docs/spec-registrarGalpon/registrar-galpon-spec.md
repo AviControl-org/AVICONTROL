@@ -6,7 +6,7 @@
 
 ### User Story 1 - Registro de un galpón (Priority: P1)
 
-Como administrador de granja, quiero registrar un galpón indicando su nombre y aforo máximo para incorporarlo al control operativo de la granja.
+Como administrador de granja, quiero registrar un galpón indicando su nombre y capacidad para incorporarlo al control operativo de la granja.
 
 **Why this priority**: Es la funcionalidad base para la operación del módulo 1; sin galpones registrados no se pueden crear lotes ni realizar seguimiento. Es una acción indispensable para el alta de activos físicos de la granja.
 
@@ -26,7 +26,7 @@ Como administrador de granja, quiero registrar un galpón indicando su nombre y 
    - **Then** el sistema muestra un mensaje de error indicando que el nombre ya está en uso 
    - **Ans**no crea el galpón
 
-3. **Scenario**: Registro con aforo inválido
+3. **Scenario**: Registro con capacidad inválida
    - **Given**  el administrador está en el formulario "Registrar galpón"
    - **When** ingresa una capacidad que no es un entero positivo (ej. -5, 0, "abc", 10.5
    - **Then** el sistema muestra un mensaje de error indicando que la capacidad debe ser un número entero positivo y no crea el galpón

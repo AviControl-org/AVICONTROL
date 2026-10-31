@@ -39,6 +39,12 @@ Como técnico de infraestructura identifico una falla en un galpón y necesito n
    - **When** en el mensaje de confirmación selecciona "Cancelar"
    - **Then** el sistema descarta los datos, no crea la alerta y permanece en el formulario o regresa sin cambios.
 
+6. **Scenario**: Consulta de la bandeja de alertas por el administrador
+   - **Given** existen alertas de mantenimiento en estado "Pendiente" y alertas en estado "Atendida"
+   - **When** el administrador abre la bandeja de alertas
+   - **Then** el sistema muestra las alertas pendientes con galpón, descripción, tipo y severidad (cuando fueron informados), fecha/hora y estado, con la acción de atenderlas
+   - **And** muestra aparte el historial de alertas atendidas, sin acción de atención
+
 ---
 
 ### Edge Cases
@@ -57,16 +63,16 @@ Como técnico de infraestructura identifico una falla en un galpón y necesito n
 - **FR-003**: El sistema DEBE validar que el galpón seleccionado exista y esté en estado "Disponible".
 - **FR-004**: El sistema DEBE requerir una descripción del problema, no vacía, con una longitud máxima de 500 caracteres.
 - **FR-005**: El sistema DEBE capturar automáticamente la fecha y hora de generación de la alerta.
-- **FR-007**: El sistema DEBE impedir la creación de más de una alerta activa (estado "Pendiente") por galpón.
-- **FR-008**: El sistema DEBE mostrar un mensaje de confirmación antes de persistir la alerta.
-- **FR-009**: Si el técnico confirma, el sistema DEBE crear la alerta con estado "Pendiente", sin cambiar el estado del galpón; la atención de la alerta DEBE remitir al spec "Actualizar estado" la transición de "Disponible" a "Mantenimiento".
-- **FR-010**: Si el técnico cancela, el sistema NO DEBE crear la alerta.
-- **FR-011**: El sistema DEBE almacenar las alertas en un historial accesible para el administrador.
-- **FR-012**: El sistema DEBE mostrar errores claros si la descripción está vacía, el galpón no es válido o ya existe una alerta activa.
+- **FR-006**: El sistema DEBE impedir la creación de más de una alerta activa (estado "Pendiente") por galpón.
+- **FR-007**: El sistema DEBE mostrar un mensaje de confirmación antes de persistir la alerta.
+- **FR-008**: Si el técnico confirma, el sistema DEBE crear la alerta con estado "Pendiente", sin cambiar el estado del galpón; la atención de la alerta DEBE remitir al spec "Actualizar estado" la transición de "Disponible" a "Mantenimiento".
+- **FR-009**: Si el técnico cancela, el sistema NO DEBE crear la alerta.
+- **FR-010**: El sistema DEBE almacenar las alertas en un historial accesible para el administrador.
+- **FR-011**: El sistema DEBE mostrar errores claros si la descripción está vacía, el galpón no es válido o ya existe una alerta activa.
 ### Key Entities
 
 - **Alerta de Mantenimiento**: Representa un aviso de falla de infraestructura generado por el técnico.
-  - Atributos: ID (UUID), Galpón ID (FK), Descripción (texto), Fecha/hora (timestamp), Técnico (identificador), Estado (Pendiente, Atendida, Eliminada), Severidad (opcional), Tipo (opcional).
+  - Atributos: ID (UUID), `galpon_id` (FK), Descripción (texto), Fecha/hora (timestamp), Técnico (identificador), Estado (Pendiente, Atendida, Eliminada), Severidad (opcional), Tipo (opcional).
   - Relaciones: Pertenece a un Galpón (muchos a uno). Un galpón solo puede tener una alerta activa a la vez.
 
 ## Success Criteria
