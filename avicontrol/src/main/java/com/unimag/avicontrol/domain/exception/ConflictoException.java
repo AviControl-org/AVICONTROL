@@ -6,4 +6,8 @@ public class ConflictoException extends NegocioException {
     public ConflictoException(String codigo, String mensaje) {
         super(codigo, mensaje);
     }
+
+    public static ConflictoException nombreDuplicado(String mensaje) {
+        return new ConflictoException("NOMBRE_DUPLICADO", mensaje);
+    }
 }
