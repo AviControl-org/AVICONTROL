@@ -1,0 +1,27 @@
+{
+  "contenido": [
+    {
+      "id": "2fc03a21-84c4-4c83-bb15-6607bb75cb90",
+      "nombre": "Lote A1",
+      "galponId": "550e8400-e29b-41d4-a716-446655440000",
+      "fechaIngreso": "2026-10-05",
+      "poblacionInicial": 1000,
+      "poblacionActual": 1000,
+      "costoTotal": 5000000
+    },
+    {
+      "id": "9b2e5c14-3f7a-4d1e-8a60-1c2d3e4f5a6b",
+      "nombre": "Lote Z9",
+      "galponId": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+      "fechaIngreso": "2026-08-01",
+      "poblacionInicial": 900,
+      "poblacionActual": 870,
+      "costoTotal": 4200000,
+      "desvinculadoEn": "2026-09-20T08:15:00-05:00"
+    }
+  ],
+  "pagina": 1,
+  "tamanio": 10,
+  "totalElementos": 2,
+  "totalPaginas": 1
+}
