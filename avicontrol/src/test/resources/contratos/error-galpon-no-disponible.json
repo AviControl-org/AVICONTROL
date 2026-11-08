@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/galpon-no-disponible",
+  "title": "Galpón no disponible",
+  "status": 409,
+  "detail": "El galpón seleccionado no está disponible para recibir un lote.",
+  "instance": "/api/v1/lotes",
+  "code": "GALPON_NO_DISPONIBLE"
+}

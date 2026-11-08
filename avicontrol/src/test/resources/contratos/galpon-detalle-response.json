@@ -1,0 +1,15 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "nombre": "Galpón Norte",
+  "capacidad": 1500,
+  "estado": "PRODUCTIVO",
+  "loteActivo": {
+    "id": "2fc03a21-84c4-4c83-bb15-6607bb75cb90",
+    "nombre": "Lote A1",
+    "poblacionInicial": 1000,
+    "poblacionActual": 975,
+    "fechaIngreso": "2026-09-15",
+    "edadDias": 21,
+    "costoTotal": 5000000
+  }
+}

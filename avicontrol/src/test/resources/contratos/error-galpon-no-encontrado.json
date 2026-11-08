@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/galpon-no-encontrado",
+  "title": "Galpón no encontrado",
+  "status": 404,
+  "detail": "El galpón consultado no existe.",
+  "instance": "/api/v1/galpones/d9b2d63d-a233-4123-847a-3f2c0c1e6b55",
+  "code": "GALPON_NO_ENCONTRADO"
+}

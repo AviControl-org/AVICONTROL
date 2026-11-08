@@ -1,0 +1,75 @@
+package com.unimag.avicontrol.infrastructure.in.rest.controller.galpon;
+
+import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
+import com.unimag.avicontrol.application.port.in.galpon.RegistrarGalponUseCase;
+import com.unimag.avicontrol.domain.model.galpon.ConsultaGalpones;
+import com.unimag.avicontrol.domain.model.galpon.Galpon;
+import com.unimag.avicontrol.domain.policy.compartido.ReglasFecha;
+import com.unimag.avicontrol.infrastructure.in.rest.compartido.ParametrosConsulta;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.GalponDetalleResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.GalponPaginaResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.GalponResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.RegistrarGalponRequest;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.lote.LoteHistorialResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.mapper.galpon.GalponRestMapper;
+import jakarta.validation.Valid;
+import java.net.URI;
+import java.time.Clock;
+import java.util.UUID;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/** Adaptador de entrada REST: valida la forma, delega en el puerto y mapea. No contiene reglas de negocio. */
+@RestController
+@RequestMapping("/api/v1/galpones")
+public class GalponController {
+
+    private final RegistrarGalponUseCase registrarGalpon;
+    private final ConsultarGalponUseCase consultarGalpon;
+    private final Clock clock;
+
+    public GalponController(RegistrarGalponUseCase registrarGalpon, ConsultarGalponUseCase consultarGalpon,
+                            Clock clock) {
+        this.registrarGalpon = registrarGalpon;
+        this.consultarGalpon = consultarGalpon;
+        this.clock = clock;
+    }
+
+    @PostMapping
+    public ResponseEntity<GalponResponse> registrar(@Valid @RequestBody RegistrarGalponRequest request) {
+        Galpon galpon = registrarGalpon.registrar(
+                new RegistrarGalponUseCase.Comando(request.nombre(), request.capacidad()));
+        return ResponseEntity.created(URI.create("/api/v1/galpones/" + galpon.id()))
+                .body(GalponRestMapper.aResponse(galpon));
+    }
+
+    @GetMapping
+    public GalponPaginaResponse listar(@RequestParam(required = false) String nombre,
+                                       @RequestParam(required = false) String estado,
+                                       @RequestParam(defaultValue = "nombre,asc") String orden,
+                                       @RequestParam(defaultValue = "1") int page) {
+        ParametrosConsulta.Orden ordenado = ParametrosConsulta.orden(orden);
+        ConsultaGalpones consulta = new ConsultaGalpones(
+                nombre == null || nombre.isBlank() ? null : nombre.strip(),
+                ParametrosConsulta.estadoGalpon(estado),
+                ordenado.campo(), ordenado.ascendente(),
+                ParametrosConsulta.pagina(page), ParametrosConsulta.TAMANIO_PAGINA_FIJO);
+        return GalponRestMapper.aPagina(consultarGalpon.listar(consulta));
+    }
+
+    @GetMapping("/{galponId}")
+    public GalponDetalleResponse detalle(@PathVariable UUID galponId) {
+        return GalponRestMapper.aDetalle(consultarGalpon.detalle(galponId), ReglasFecha.hoy(clock));
+    }
+
+    @GetMapping("/{galponId}/lotes")
+    public LoteHistorialResponse historialLotes(@PathVariable UUID galponId) {
+        return GalponRestMapper.aHistorial(consultarGalpon.historialLotes(galponId), ReglasFecha.hoy(clock));
+    }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/nombre-duplicado",
+  "title": "Nombre duplicado",
+  "status": 409,
+  "detail": "Ya existe un galpón con ese nombre.",
+  "instance": "/api/v1/galpones",
+  "code": "NOMBRE_DUPLICADO",
+  "fieldErrors": [
+    {
+      "field": "nombre",
+      "code": "DUPLICADO",
+      "message": "El nombre ya está en uso"
+    }
+  ]
+}
