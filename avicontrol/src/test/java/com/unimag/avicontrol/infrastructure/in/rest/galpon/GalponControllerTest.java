@@ -1,10 +1,16 @@
 package com.unimag.avicontrol.infrastructure.in.rest.galpon;
 
+import org.junit.jupiter.params.provider.CsvSource;
+import com.unimag.avicontrol.domain.model.galpon.OrigenCambioEstado;
+import com.unimag.avicontrol.domain.model.galpon.HistorialEstado;
+import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase.TransicionesDisponibles;
+import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -65,6 +71,9 @@ class GalponControllerTest {
 
     @MockitoBean
     private ConsultarGalponUseCase consultarGalpon;
+
+    @MockitoBean
+    private ActualizarEstadoUseCase actualizarEstado;
 
     /** 2026-10-05 10:00 en America/Bogota: "hoy" para las consultas con edad de lote. */
     @TestConfiguration
@@ -451,6 +460,239 @@ class GalponControllerTest {
                 .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"));
 
-        verifyNoInteractions(consultarGalpon);
+ 
+
+    // ----------------------------------------------------------------- US4: actualizar estado
+
+    private static final String RUTA_ESTADO = RUTA + "/" + ID + "/estado";
+    private static final UUID OTRO = UUID.fromString("d9b2d63d-a233-4123-847a-3f2c0c1e6b55");
+    private static final String MENSAJE_ESTADO =
+            "El estado indicado no es válido. Usa uno de: DISPONIBLE, VACIADO_SANITARIO, PRODUCTIVO, EN_COSECHA, MANTENIMIENTO, AISLAMIENTO.";
+
+    private MvcResult patchEstado(String json) throws Exception {
+        return mvc.perform(patch(RUTA_ESTADO).contentType(MediaType.APPLICATION_JSON).content(json)).andReturn();
+    }
+
+    private static HistorialEstado cambio(EstadoGalpon anterior, EstadoGalpon nuevo, String instante) {
+        return new HistorialEstado(UUID.randomUUID(), ID, anterior, nuevo, Instant.parse(instante),
+                OrigenCambioEstado.ADMINISTRADOR);
+    }
+
+    @Test
+    void transicionesDelAdministradorDevuelve200ConElFixtureYSinCache() throws Exception {
+        when(actualizarEstado.transiciones(ID)).thenReturn(
+                new TransicionesDisponibles(ID, EstadoGalpon.PRODUCTIVO, List.of(EstadoGalpon.EN_COSECHA)));
+
+        MvcResult resultado = mvc.perform(get(RUTA + "/" + ID + "/transiciones"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn();
+
+        FixtureJson.assertCoincide("galpon-transiciones-response.json", resultado);
+    }
+
+    @Test
+    void transicionesDeUnGalponDisponibleDevuelveListaVacia() throws Exception {
+        when(actualizarEstado.transiciones(ID)).thenReturn(
+                new TransicionesDisponibles(ID, EstadoGalpon.DISPONIBLE, List.of()));
+
+        mvc.perform(get(RUTA + "/" + ID + "/transiciones"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estadoActual").value("DISPONIBLE"))
+                .andExpect(jsonPath("$.destinosPermitidos").isEmpty());
+    }
+
+    @Test
+    void transicionesDeUnGalponInexistenteDevuelve404() throws Exception {
+        when(actualizarEstado.transiciones(OTRO)).thenThrow(
+                new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+
+        mvc.perform(get(RUTA + "/" + OTRO + "/transiciones"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("GALPON_NO_ENCONTRADO"))
+                .andExpect(jsonPath("$.instance").value(RUTA + "/" + OTRO + "/transiciones"));
+    }
+
+    @Test
+    void transicionesConGalponIdQueNoEsUuidDevuelve400() throws Exception {
+        mvc.perform(get(RUTA + "/abc/transiciones"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("FORMATO_INVALIDO"));
+    }
+
+    @Test
+    void cambioDeEstadoExitosoDevuelve200ConElFixtureYLlamaAlCasoDeUso() throws Exception {
+        when(actualizarEstado.actualizarEstado(ID, EstadoGalpon.PRODUCTIVO, EstadoGalpon.EN_COSECHA)).thenReturn(
+                cambio(EstadoGalpon.PRODUCTIVO, EstadoGalpon.EN_COSECHA, "2026-10-05T14:15:00Z"));
+
+        MvcResult resultado = patchEstado(FixtureJson.texto("galpon-estado-request.json"));
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(200);
+        FixtureJson.assertCoincide("galpon-estado-response.json", resultado);
+        verify(actualizarEstado).actualizarEstado(ID, EstadoGalpon.PRODUCTIVO, EstadoGalpon.EN_COSECHA);
+    }
+
+    @Test
+    void estadoEsperadoQueYaCambioDevuelve409ConElFixtureDeError() throws Exception {
+        when(actualizarEstado.actualizarEstado(any(), any(), any())).thenThrow(new ConflictoException(
+                "ESTADO_ESPERADO_CAMBIADO", "El estado del galpón cambió. Actualiza la información e inténtalo de nuevo."));
+
+        MvcResult resultado = patchEstado(FixtureJson.texto("galpon-estado-request.json"));
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(409);
+        FixtureJson.assertCoincide("error-estado-esperado-cambiado.json", resultado);
+    }
+
+    @Test
+    void transicionFueraDeLaMatrizDevuelve409TransicionNoPermitida() throws Exception {
+        when(actualizarEstado.actualizarEstado(any(), any(), any())).thenThrow(new ConflictoException(
+                "TRANSICION_NO_PERMITIDA", "No se puede pasar de ese estado al estado solicitado."));
+
+        MvcResult resultado = patchEstado("{\"estadoEsperado\": \"AISLAMIENTO\", \"estadoDestino\": \"VACIADO_SANITARIO\"}");
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(409);
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getContentAsString())
+                .contains("\"code\":\"TRANSICION_NO_PERMITIDA\"", "\"title\":\"Transición no permitida\"");
+    }
+
+    @Test
+    void transicionQueElAdministradorNoPuedePedirDevuelve409OrigenNoAutorizado() throws Exception {
+        when(actualizarEstado.actualizarEstado(any(), any(), any())).thenThrow(new ConflictoException(
+                "ORIGEN_NO_AUTORIZADO", "El administrador no puede solicitar esa transición por este servicio."));
+
+        MvcResult resultado = patchEstado("{\"estadoEsperado\": \"DISPONIBLE\", \"estadoDestino\": \"PRODUCTIVO\"}");
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(409);
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getContentAsString())
+                .contains("\"code\":\"ORIGEN_NO_AUTORIZADO\"");
+    }
+
+    @Test
+    void cambioDeUnGalponInexistenteDevuelve404() throws Exception {
+        when(actualizarEstado.actualizarEstado(any(), any(), any())).thenThrow(
+                new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+
+        mvc.perform(patch(RUTA + "/" + OTRO + "/estado").contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-estado-request.json")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("GALPON_NO_ENCONTRADO"))
+                .andExpect(jsonPath("$.instance").value(RUTA + "/" + OTRO + "/estado"));
+    }
+
+    @Test
+    void estadoFueraDeLosSeisValoresDevuelve400EstadoInvalido() throws Exception {
+        MvcResult resultado = patchEstado("{\"estadoEsperado\": \"PRODUCTIVO\", \"estadoDestino\": \"ACTIVO\"}");
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(400);
+        String cuerpo = resultado.getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(cuerpo)
+                .contains("\"code\":\"ESTADO_INVALIDO\"", MENSAJE_ESTADO, "\"field\":\"estadoDestino\"",
+                        "\"code\":\"VALOR_NO_PERMITIDO\"");
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void estadoAusenteDevuelve400EstadoInvalidoConCampoObligatorio() throws Exception {
+        MvcResult resultado = patchEstado("{\"estadoEsperado\": \"PRODUCTIVO\"}");
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(400);
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getContentAsString())
+                .contains("\"code\":\"ESTADO_INVALIDO\"", "\"field\":\"estadoDestino\"", "\"code\":\"OBLIGATORIO\"");
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void losDosEstadosInvalidosADaLaVezDevuelve400ValidacionFallida() throws Exception {
+        mvc.perform(patch(RUTA_ESTADO).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"estadoEsperado\": \"ACTIVO\", \"estadoDestino\": \"INACTIVO\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"))
+                .andExpect(jsonPath("$.fieldErrors.length()").value(2))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='estadoEsperado')].code").value("VALOR_NO_PERMITIDO"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field=='estadoDestino')].code").value("VALOR_NO_PERMITIDO"));
+
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void bodyQueNoEsJsonValidoDevuelve400CuerpoInvalido() throws Exception {
+        mvc.perform(patch(RUTA_ESTADO).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"estadoEsperado\": \"PRODUCTIVO\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CUERPO_INVALIDO"));
+
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void cambioConGalponIdQueNoEsUuidDevuelve400() throws Exception {
+        mvc.perform(patch(RUTA + "/abc/estado").contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-estado-request.json")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"));
+
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void historialDeEstadosDevuelve200ConElFixtureYLosValoresPorDefecto() throws Exception {
+        HistorialEstado reciente = new HistorialEstado(UUID.fromString("7c3e9a14-5d2b-4e8f-b6a1-3f0d8c2e9b57"), ID,
+                EstadoGalpon.PRODUCTIVO, EstadoGalpon.EN_COSECHA, Instant.parse("2026-10-05T14:15:00Z"),
+                OrigenCambioEstado.ADMINISTRADOR);
+        HistorialEstado antiguo = new HistorialEstado(UUID.fromString("b84f1d60-92a7-4c35-8e0b-6a5d3c7f1e29"), ID,
+                EstadoGalpon.DISPONIBLE, EstadoGalpon.PRODUCTIVO, Instant.parse("2026-09-15T13:00:00Z"),
+                OrigenCambioEstado.REGISTRO_LOTE);
+        when(actualizarEstado.historial(ID, 1, 20)).thenReturn(new Pagina<>(List.of(reciente, antiguo), 1, 20, 2));
+
+        MvcResult resultado = mvc.perform(get(RUTA + "/" + ID + "/historial-estados"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn();
+
+        FixtureJson.assertCoincide("galpon-historial-estados-response.json", resultado);
+    }
+
+    @Test
+    void historialDeEstadosPasaPageYSizeAlCasoDeUso() throws Exception {
+        when(actualizarEstado.historial(ID, 2, 5)).thenReturn(new Pagina<>(List.of(), 2, 5, 6));
+
+        mvc.perform(get(RUTA + "/" + ID + "/historial-estados").param("page", "2").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(2))
+                .andExpect(jsonPath("$.tamanio").value(5))
+                .andExpect(jsonPath("$.totalPaginas").value(2));
+
+        verify(actualizarEstado).historial(ID, 2, 5);
+    }
+
+    @ParameterizedTest(name = "{0}={1} devuelve 400 PARAMETRO_INVALIDO")
+    @CsvSource({"page,0", "page,-1", "size,0", "size,101", "size,-5"})
+    void historialDeEstadosConPageOSizeFueraDeRangoDevuelve400(String parametro, String valor) throws Exception {
+        mvc.perform(get(RUTA + "/" + ID + "/historial-estados").param(parametro, valor))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value(parametro));
+
+        verifyNoInteractions(actualizarEstado);
+    }
+
+    @Test
+    void historialDeEstadosDeUnGalponInexistenteDevuelve404() throws Exception {
+        when(actualizarEstado.historial(OTRO, 1, 20)).thenThrow(
+                new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+
+        mvc.perform(get(RUTA + "/" + OTRO + "/historial-estados"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("GALPON_NO_ENCONTRADO"));
+    }
+
+    @Test
+    void historialDeEstadosConGalponIdQueNoEsUuidDevuelve400() throws Exception {
+        mvc.perform(get(RUTA + "/abc/historial-estados"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"));
     }
 }
