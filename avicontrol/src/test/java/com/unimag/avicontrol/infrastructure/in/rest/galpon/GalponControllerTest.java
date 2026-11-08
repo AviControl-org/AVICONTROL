@@ -460,7 +460,8 @@ class GalponControllerTest {
                 .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"));
 
- 
+        verifyNoInteractions(consultarGalpon);
+    }
 
     // ----------------------------------------------------------------- US4: actualizar estado
 
@@ -603,15 +604,16 @@ class GalponControllerTest {
         verifyNoInteractions(actualizarEstado);
     }
 
+    /** Diferencia conocida con el escenario 15 del plan: Jackson corta en el primer enum inválido. */
     @Test
-    void losDosEstadosInvalidosADaLaVezDevuelve400ValidacionFallida() throws Exception {
+    void losDosEstadosInvalidosADaLaVezSeAtribuyenAlPrimerCampoInvalido() throws Exception {
         mvc.perform(patch(RUTA_ESTADO).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"estadoEsperado\": \"ACTIVO\", \"estadoDestino\": \"INACTIVO\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"))
-                .andExpect(jsonPath("$.fieldErrors.length()").value(2))
-                .andExpect(jsonPath("$.fieldErrors[?(@.field=='estadoEsperado')].code").value("VALOR_NO_PERMITIDO"))
-                .andExpect(jsonPath("$.fieldErrors[?(@.field=='estadoDestino')].code").value("VALOR_NO_PERMITIDO"));
+                .andExpect(jsonPath("$.code").value("ESTADO_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors.length()").value(1))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("estadoEsperado"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("VALOR_NO_PERMITIDO"));
 
         verifyNoInteractions(actualizarEstado);
     }
