@@ -1,5 +1,7 @@
 package com.unimag.avicontrol.domain.port.out.galpon;
 
+import com.unimag.avicontrol.domain.model.compartido.Pagina;
+import com.unimag.avicontrol.domain.model.galpon.ConsultaGalpones;
 import com.unimag.avicontrol.domain.model.galpon.Galpon;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,4 +19,7 @@ public interface GalponRepository {
     boolean existsByNombreClave(String clave);
 
     boolean existsByNombreClaveAndIdNot(String clave, UUID id);
+
+    /** Búsqueda parcial por nombre, filtro por estado, orden (desempata por id) y página de {@code consulta}. */
+    Pagina<Galpon> search(ConsultaGalpones consulta);
 }

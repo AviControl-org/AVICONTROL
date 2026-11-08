@@ -7,6 +7,7 @@ import com.unimag.avicontrol.domain.model.lote.Lote;
 import com.unimag.avicontrol.domain.port.out.lote.LoteRepository;
 import com.unimag.avicontrol.infrastructure.out.persistence.mapper.lote.LotePersistenceMapper;
 import com.unimag.avicontrol.infrastructure.out.persistence.repository.lote.LoteJpaRepository;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -61,5 +62,16 @@ public class LotePersistenceAdapter implements LoteRepository {
         var resultado = jpa.findAll(peticion);
         return new Pagina<>(resultado.getContent().stream().map(LotePersistenceMapper::aDominio).toList(),
                 pagina, tamanio, resultado.getTotalElements());
+    }
+
+    @Override
+    public boolean existsByGalponId(UUID galponId) {
+        return jpa.existsByGalponId(galponId);
+    }
+
+    @Override
+    public List<Lote> findByGalponIdOrderByFechaIngresoDesc(UUID galponId) {
+        return jpa.findByGalponIdOrderByFechaIngresoDescIdDesc(galponId).stream()
+                .map(LotePersistenceMapper::aDominio).toList();
     }
 }

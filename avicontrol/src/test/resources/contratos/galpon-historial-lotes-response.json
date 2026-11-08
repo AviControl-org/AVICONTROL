@@ -1,0 +1,23 @@
+{
+  "galponId": "550e8400-e29b-41d4-a716-446655440000",
+  "loteActivo": {
+    "id": "2fc03a21-84c4-4c83-bb15-6607bb75cb90",
+    "nombre": "Lote B2",
+    "poblacionInicial": 1200,
+    "poblacionActual": 1180,
+    "fechaIngreso": "2026-09-25",
+    "edadDias": 11,
+    "costoTotal": 6000000
+  },
+  "lotesAnteriores": [
+    {
+      "id": "9a1f4c70-2d3b-4a55-8e61-0b7f3c9d2e18",
+      "nombre": "Lote A1",
+      "poblacionInicial": 1000,
+      "poblacionActual": 940,
+      "fechaIngreso": "2026-07-01",
+      "edadDias": 52,
+      "costoTotal": 5000000
+    }
+  ]
+}

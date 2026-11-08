@@ -15,6 +15,7 @@ import com.unimag.avicontrol.domain.exception.ValidacionNegocioException;
 import com.unimag.avicontrol.domain.model.galpon.EstadoGalpon;
 import com.unimag.avicontrol.domain.model.galpon.Galpon;
 import com.unimag.avicontrol.domain.port.out.galpon.GalponRepository;
+import com.unimag.avicontrol.domain.port.out.lote.LoteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,11 +31,14 @@ class GalponServiceTest {
     @Mock
     private GalponRepository galpones;
 
+    @Mock
+    private LoteRepository lotes;
+
     private GalponService servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new GalponService(galpones);
+        servicio = new GalponService(galpones, lotes);
     }
 
     private void guardarDevuelveLoRecibido() {

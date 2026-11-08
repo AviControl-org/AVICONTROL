@@ -2,6 +2,7 @@ package com.unimag.avicontrol.domain.port.out.lote;
 
 import com.unimag.avicontrol.domain.model.compartido.Pagina;
 import com.unimag.avicontrol.domain.model.lote.Lote;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,4 +19,9 @@ public interface LoteRepository {
 
     /** Todos los lotes, del más reciente al más antiguo (desempate por id); {@code pagina} empieza en 1. */
     Pagina<Lote> findAll(int pagina, int tamanio);
+
+    boolean existsByGalponId(UUID galponId);
+
+    /** Todos los lotes del galpón (activo y anteriores), del más reciente al más antiguo. */
+    List<Lote> findByGalponIdOrderByFechaIngresoDesc(UUID galponId);
 }
