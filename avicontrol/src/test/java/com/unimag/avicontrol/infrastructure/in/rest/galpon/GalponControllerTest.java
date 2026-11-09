@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.EditarGalponUseCase;
 import com.unimag.avicontrol.domain.exception.ValidacionNegocioException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.DetalleGalpon;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.HistorialLotes;
@@ -108,6 +109,19 @@ class GalponControllerTest {
 
         FixtureJson.assertCoincide("galpon-registrar-response.json", resultado);
         verify(registrarGalpon).registrar(new Comando("Galpón Norte", 1500));
+    }
+
+    @Test
+    void siLaBaseDeDatosFallaAlRegistrarDevuelve500ErrorInternoSinMostrarLaCausa() throws Exception {
+        when(registrarGalpon.registrar(any()))
+                .thenThrow(new DataAccessResourceFailureException("Connection to localhost:5432 refused"));
+
+        MvcResult resultado = enviar(FixtureJson.texto("galpon-registrar-request.json"));
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(500);
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getContentAsString())
+                .contains("\"code\":\"ERROR_INTERNO\"", "No fue posible completar la operación. Intenta de nuevo.")
+                .doesNotContain("5432", "refused");
     }
 
     @Test
