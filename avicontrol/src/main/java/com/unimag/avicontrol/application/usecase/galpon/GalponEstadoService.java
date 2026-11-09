@@ -11,6 +11,8 @@ import com.unimag.avicontrol.domain.port.out.galpon.GalponRepository;
 import com.unimag.avicontrol.domain.port.out.galpon.HistorialEstadoRepository;
 import java.time.Clock;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class GalponEstadoService {
+
+    private static final Logger log = LoggerFactory.getLogger(GalponEstadoService.class);
 
     private final GalponRepository galpones;
     private final HistorialEstadoRepository historial;
@@ -47,7 +51,9 @@ public class GalponEstadoService {
         TransicionesPermitidas.validar(galpon.estado(), estadoDestino, origen);
 
         galpones.save(galpon.conEstado(estadoDestino));
-        return historial.save(new HistorialEstado(UUID.randomUUID(), galponId, galpon.estado(), estadoDestino,
-                clock.instant(), origen));
+        HistorialEstado cambio = historial.save(new HistorialEstado(UUID.randomUUID(), galponId, galpon.estado(),
+                estadoDestino, clock.instant(), origen));
+        log.info("galpon={} {} -> {} origen={}", galponId, galpon.estado(), estadoDestino, origen);
+        return cambio;
     }
 }

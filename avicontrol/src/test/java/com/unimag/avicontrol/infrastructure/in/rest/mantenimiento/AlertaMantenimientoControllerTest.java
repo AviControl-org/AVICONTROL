@@ -1,5 +1,6 @@
 package com.unimag.avicontrol.infrastructure.in.rest.mantenimiento;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -432,5 +434,48 @@ class AlertaMantenimientoControllerTest {
                 .andExpect(jsonPath("$.code").value("CUERPO_INVALIDO"));
 
         verifyNoInteractions(alertas);
+    }
+
+    // ------------------------------------- base de datos no disponible (T084)
+
+    private static final String CAUSA_TECNICA = "Connection to localhost:5432 refused";
+
+    @Test
+    void siLaBaseDeDatosFallaAlGenerarResponde500GenericoSinMostrarLaCausa() throws Exception {
+        when(alertas.generar(new Comando(GALPON_ID, "Reparar sistema de ventilación", "Alta", "Ventilación",
+                "tecnico-01"))).thenThrow(new DataAccessResourceFailureException(CAUSA_TECNICA));
+
+        MvcResult resultado = mvc.perform(post(RUTA).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("alerta-mantenimiento-request.json")))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("ERROR_INTERNO"))
+                .andExpect(jsonPath("$.detail").value("No fue posible completar la operación. Intenta de nuevo."))
+                .andReturn();
+
+        assertThat(resultado.getResponse().getContentAsString()).doesNotContain("5432", "refused");
+    }
+
+    @Test
+    void siLaBaseDeDatosFallaAlAtenderResponde500Generico() throws Exception {
+        when(alertas.atender(ALERTA_ID)).thenThrow(new DataAccessResourceFailureException(CAUSA_TECNICA));
+
+        mvc.perform(patch(RUTA + "/" + ALERTA_ID).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("alerta-atender-request.json")))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("ERROR_INTERNO"));
+    }
+
+    @Test
+    void siLaBaseDeDatosFallaAlListarResponde500ErrorConsulta() throws Exception {
+        when(alertas.listar(EstadoAlertaMantenimiento.PENDIENTE, null, 1, 20))
+                .thenThrow(new DataAccessResourceFailureException(CAUSA_TECNICA));
+
+        MvcResult resultado = mvc.perform(get(RUTA))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("ERROR_CONSULTA"))
+                .andExpect(jsonPath("$.detail").value("No fue posible obtener los datos. Puedes reintentar la consulta."))
+                .andReturn();
+
+        assertThat(resultado.getResponse().getContentAsString()).doesNotContain("5432", "refused");
     }
 }
