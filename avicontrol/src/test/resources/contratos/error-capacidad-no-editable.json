@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/capacidad-no-editable",
+  "title": "Capacidad no editable",
+  "status": 409,
+  "detail": "La capacidad solo se puede modificar cuando el galpón está en mantenimiento.",
+  "instance": "/api/v1/galpones/550e8400-e29b-41d4-a716-446655440000",
+  "code": "CAPACIDAD_NO_EDITABLE"
+}

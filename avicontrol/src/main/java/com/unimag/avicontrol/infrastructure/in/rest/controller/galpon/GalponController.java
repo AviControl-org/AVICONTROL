@@ -7,6 +7,8 @@ import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.CambioEstadoRespo
 import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.ActualizarEstadoRequest;
 import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
+import com.unimag.avicontrol.application.port.in.galpon.EditarGalponUseCase;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.EditarGalponRequest;
 import com.unimag.avicontrol.application.port.in.galpon.RegistrarGalponUseCase;
 import com.unimag.avicontrol.domain.model.galpon.ConsultaGalpones;
 import com.unimag.avicontrol.domain.model.galpon.Galpon;
@@ -39,13 +41,15 @@ public class GalponController {
     private final RegistrarGalponUseCase registrarGalpon;
     private final ConsultarGalponUseCase consultarGalpon;
     private final ActualizarEstadoUseCase actualizarEstado;
+    private final EditarGalponUseCase editarGalpon;
     private final Clock clock;
 
     public GalponController(RegistrarGalponUseCase registrarGalpon, ConsultarGalponUseCase consultarGalpon,
-                            ActualizarEstadoUseCase actualizarEstado, Clock clock) {
+                            ActualizarEstadoUseCase actualizarEstado, EditarGalponUseCase editarGalpon, Clock clock) {
         this.registrarGalpon = registrarGalpon;
         this.consultarGalpon = consultarGalpon;
         this.actualizarEstado = actualizarEstado;
+        this.editarGalpon = editarGalpon;
         this.clock = clock;
     }
 
@@ -100,5 +104,12 @@ public class GalponController {
             @RequestParam(defaultValue = "" + ParametrosConsulta.TAMANIO_PAGINA_POR_DEFECTO) int size) {
         return GalponRestMapper.aHistorialEstados(
                 actualizarEstado.historial(galponId, ParametrosConsulta.pagina(page), ParametrosConsulta.tamanio(size)));
+    }
+
+    @PatchMapping("/{galponId}")
+    public GalponResponse editar(@PathVariable UUID galponId, @Valid @RequestBody EditarGalponRequest request) {
+        Galpon galpon = editarGalpon.editar(galponId,
+                new EditarGalponUseCase.Comando(request.nombre(), request.capacidad()));
+        return GalponRestMapper.aResponse(galpon);
     }
 }

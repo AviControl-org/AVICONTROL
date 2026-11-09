@@ -18,6 +18,8 @@ import com.unimag.avicontrol.domain.model.galpon.EstadoGalpon;
 import com.unimag.avicontrol.domain.model.galpon.Galpon;
 import com.unimag.avicontrol.domain.port.out.galpon.GalponRepository;
 import com.unimag.avicontrol.domain.port.out.lote.LoteRepository;
+import com.unimag.avicontrol.domain.port.out.galpon.HistorialCambioGalponRepository;
+import java.time.Clock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,12 +41,15 @@ class GalponServiceTest {
     private HistorialEstadoRepository historialEstados;
     @Mock
     private GalponEstadoService estados;
+    @Mock
+    private HistorialCambioGalponRepository historialCambios;
 
     private GalponService servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new GalponService(galpones, lotes, historialEstados, estados);
+        servicio = new GalponService(galpones, lotes, historialEstados, historialCambios, estados,
+                Clock.systemUTC());
     }
 
     private void guardarDevuelveLoRecibido() {
