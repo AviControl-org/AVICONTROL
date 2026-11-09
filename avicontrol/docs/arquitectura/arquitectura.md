@@ -28,6 +28,13 @@ Este documento define el stack, las reglas arquitectónicas y el modelo de comun
 | Mensajería | Apache Kafka | Comunicación asíncrona de eventos entre módulos |
 | Kafka client | Spring Kafka | Productores y consumidores de mensajes Kafka |
 | Desarrollo local | Docker Compose | PostgreSQL y Kafka para desarrollo local |
+| Frontend: lenguaje | TypeScript | Interfaz web del Módulo 1 (ver [Frontend](#frontend)) |
+| Frontend: interfaz | React | Componentes de las pantallas de los mockups |
+| Frontend: construcción | Vite | Servidor de desarrollo, proxy de `/api` y build de producción |
+| Frontend: navegación | React Router | Una ruta por pantalla |
+| Frontend: datos remotos | TanStack Query | Carga, error y reintento de las consultas a la API REST |
+| Frontend: API simulada | Mock Service Worker (MSW) | Respuestas de `/api/v1` mientras el backend no tenga controladores |
+| Frontend: pruebas | Vitest y Testing Library | Pruebas unitarias del cliente de API y de los componentes |
 
 Las versiones administradas por Spring Boot se toman de su gestión de dependencias. No se incorporan Spring Security ni Spring Modulith. La comunicación sincrónica entre módulos (consultas del Módulo 3 al Módulo 1) se realiza mediante contratos REST. La comunicación asíncrona entre módulos (eventos del Módulo 2 hacia el Módulo 1) se realiza mediante Apache Kafka.
 
@@ -158,6 +165,55 @@ src/test/resources/contratos/
 ```
 
 `infrastructure/local` y `db/local` existen solo para el perfil `local` (ver *Perfil local*).
+
+## Frontend
+
+El Módulo 1 tiene una interfaz web: una aplicación de una sola página (SPA) que corre en el navegador y consume la API REST `/api/v1` del [catálogo de servicios](../plan-general/plan-modulo-1.md#catálogo-de-servicios). Es el consumidor de los specs de la clase C de [contratos-por-spec.md](../plan-general/contratos-por-spec.md). Vive en la carpeta `frontend/` de la raíz del repositorio, al lado de `avicontrol/`, y no forma parte del build de Maven.
+
+### Fuentes que sigue
+
+- **Contrato**: rutas, campos, enumeraciones y códigos de error son los del plan de cada spec y las [Convenciones de contrato](#convenciones-de-contrato). El frontend no renombra campos: si el plan dice `capacidad`, el código usa `capacidad`.
+- **Diseño**: los mockups y los tokens de marca de la rama `mockups-modulo-1` (`docs/mockups/` y `docs/brand/`). `tokens.css` se copia sin modificar.
+- **Precedencia**: si un mockup contradice al spec o a su plan, manda el spec. Por ejemplo, los mockups dicen "Aforo máximo" y los specs dicen "capacidad"; la pantalla muestra "Capacidad".
+
+### Alcance
+
+- Pantallas con servicio REST: consultar galpón y lote, registrar galpón, registrar lote, actualizar estado, editar galpón y generar alerta de mantenimiento.
+- Sin pantalla propia: recibir mortalidad, recibir alerta sanitaria y recibir vaciado sanitario llegan por Kafka y actualizar población actual no tiene REST. Su efecto (estado del galpón, población actual del lote) se ve en las pantallas de consulta.
+- Sin autenticación (P-01): un selector de rol en el encabezado (Administrador o Técnico de infraestructura) cambia la navegación solo para la demostración. Con el rol técnico, `tecnicoId` se envía con el valor provisional `tecnico-01` (P-14).
+
+### Estructura de carpetas
+
+```text
+frontend/
+├── public/mockServiceWorker.js   (generado por MSW)
+└── src/
+    ├── api/          cliente HTTP, tipos comunes del contrato y un archivo por recurso con sus DTO y llamadas
+    ├── app/          proveedores (consultas, rol de demostración) y rutas
+    ├── components/   componentes reutilizables del anexo de los mockups (AppShell, StatusChip, Field, Banner, ConfirmDialog, DataTable...)
+    ├── pages/        una carpeta por recurso (galpones, lotes, alertas) con sus pantallas
+    ├── mocks/        manejadores de MSW con las respuestas de ejemplo de cada plan
+    ├── styles/       tokens.css (marca) y base.css (clases de los mockups)
+    └── test/         configuración de Vitest
+```
+
+### Reglas del frontend
+
+- Solo `src/api/cliente.ts` hace peticiones HTTP. Antepone `/api/v1` y convierte los errores RFC 9457 en `ErrorApi` con su `code` y `fieldErrors`, que las pantallas muestran junto a cada campo.
+- Los componentes de `components/` no llaman a la API: reciben datos y eventos por props. Las pantallas de `pages/` usan los archivos de `api/` mediante TanStack Query.
+- Las consultas no se guardan en caché entre pantallas, porque toda respuesta `GET` lleva `Cache-Control: no-store`.
+- Paginación: `page` empieza en 1 y la respuesta trae `contenido`, `pagina`, `tamanio`, `totalElementos` y `totalPaginas`.
+- Los manejadores de `mocks/` responden con los JSON de ejemplo del plan de cada spec. Cuando el backend tiene el controlador, la pantalla se prueba contra el backend real sin cambiar código.
+
+### Ejecución
+
+| Comando (en `frontend/`) | Qué hace |
+| --- | --- |
+| `npm install` | Instala las dependencias |
+| `npm run dev` | Levanta la interfaz en `http://localhost:5173` con la API simulada (MSW) |
+| `npm run dev:backend` | Levanta la interfaz contra el backend real: Vite redirige `/api` a `http://localhost:8080` |
+| `npm test` | Ejecuta las pruebas con Vitest |
+| `npm run build` | Verifica los tipos y genera la versión de producción en `dist/` |
 
 ## Perfil local
 
