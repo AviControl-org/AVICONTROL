@@ -1,5 +1,7 @@
 package com.unimag.avicontrol.infrastructure.out.persistence.adapter.sanitario;
 
+import java.util.List;
+import java.time.Instant;
 import com.unimag.avicontrol.domain.model.sanitario.AlertaVaciadoSanitario;
 import com.unimag.avicontrol.domain.port.out.sanitario.AlertaVaciadoSanitarioRepository;
 import com.unimag.avicontrol.infrastructure.out.persistence.mapper.compartido.AlertaPersistenceMapper;
@@ -25,5 +27,10 @@ public class AlertaVaciadoPersistenceAdapter implements AlertaVaciadoSanitarioRe
     @Override
     public Optional<AlertaVaciadoSanitario> findById(UUID alertaId) {
         return jpa.findById(alertaId).map(AlertaPersistenceMapper::aDominio);
+    }
+
+    @Override
+    public List<UUID> findGalponIdsConVaciadoCumplido(Instant limite) {
+        return jpa.findGalponIdsConVaciadoCumplido(limite);
     }
 }

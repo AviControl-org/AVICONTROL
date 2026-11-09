@@ -28,6 +28,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.unimag.avicontrol.domain.port.out.galpon.HistorialCambioGalponRepository;
+import java.time.Clock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,12 +51,15 @@ class GalponServiceConsultaTest {
     private HistorialEstadoRepository historialEstados;
     @Mock
     private GalponEstadoService estados;
+    @Mock
+    private HistorialCambioGalponRepository historialCambios;
 
     private GalponService servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new GalponService(galpones, lotes, historialEstados, estados);
+        servicio = new GalponService(galpones, lotes, historialEstados, historialCambios, estados,
+                Clock.systemUTC());
     }
 
     private static ConsultaGalpones consulta(String nombre, EstadoGalpon estado) {

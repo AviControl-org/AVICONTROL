@@ -4,6 +4,7 @@ import com.unimag.avicontrol.domain.exception.ErrorDeCampo;
 import com.unimag.avicontrol.domain.exception.ValidacionNegocioException;
 import com.unimag.avicontrol.domain.model.galpon.ConsultaGalpones.CampoOrden;
 import com.unimag.avicontrol.domain.model.galpon.EstadoGalpon;
+import com.unimag.avicontrol.domain.model.mantenimiento.EstadoAlertaMantenimiento;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,19 @@ public final class ParametrosConsulta {
             return EstadoGalpon.valueOf(texto.strip());
         } catch (IllegalArgumentException e) {
             throw invalido("estado", "VALOR_NO_PERMITIDO", "Debe ser uno de: " + valores(EstadoGalpon.values()));
+        }
+    }
+
+    /** {@code estado} ausente o vacío significa PENDIENTE: la bandeja del administrador. */
+    public static EstadoAlertaMantenimiento estadoAlerta(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return EstadoAlertaMantenimiento.PENDIENTE;
+        }
+        try {
+            return EstadoAlertaMantenimiento.valueOf(texto.strip());
+        } catch (IllegalArgumentException e) {
+            throw invalido("estado", "VALOR_NO_PERMITIDO",
+                    "Debe ser uno de: " + valores(EstadoAlertaMantenimiento.values()));
         }
     }
 

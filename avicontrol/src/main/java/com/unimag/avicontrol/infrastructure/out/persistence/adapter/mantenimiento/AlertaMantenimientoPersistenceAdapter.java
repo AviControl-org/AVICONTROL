@@ -2,13 +2,17 @@ package com.unimag.avicontrol.infrastructure.out.persistence.adapter.mantenimien
 
 import com.unimag.avicontrol.infrastructure.out.persistence.adapter.compartido.RestriccionesUnicas;
 import com.unimag.avicontrol.domain.exception.ConflictoException;
+import com.unimag.avicontrol.domain.model.compartido.Pagina;
 import com.unimag.avicontrol.domain.model.mantenimiento.AlertaMantenimiento;
+import com.unimag.avicontrol.domain.model.mantenimiento.EstadoAlertaMantenimiento;
 import com.unimag.avicontrol.domain.port.out.mantenimiento.AlertaMantenimientoRepository;
 import com.unimag.avicontrol.infrastructure.out.persistence.mapper.compartido.AlertaPersistenceMapper;
 import com.unimag.avicontrol.infrastructure.out.persistence.repository.mantenimiento.AlertaMantenimientoJpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,5 +39,20 @@ public class AlertaMantenimientoPersistenceAdapter implements AlertaMantenimient
     @Override
     public Optional<AlertaMantenimiento> findById(UUID id) {
         return jpa.findById(id).map(AlertaPersistenceMapper::aDominio);
+    }
+
+    @Override
+    public boolean existsPendienteByGalponId(UUID galponId) {
+        return jpa.existsByGalponIdAndEstado(galponId, EstadoAlertaMantenimiento.PENDIENTE);
+    }
+
+    @Override
+    public Pagina<AlertaMantenimiento> search(EstadoAlertaMantenimiento estado, UUID galponId, int pagina,
+                                              int tamanio) {
+        var peticion = PageRequest.of(pagina - 1, tamanio, Sort.by(Sort.Order.desc("fechaHora"), Sort.Order.desc("id")));
+        var resultado = galponId == null ? jpa.findByEstado(estado, peticion)
+                : jpa.findByEstadoAndGalponId(estado, galponId, peticion);
+        return new Pagina<>(resultado.getContent().stream().map(AlertaPersistenceMapper::aDominio).toList(),
+                pagina, tamanio, resultado.getTotalElements());
     }
 }

@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/alerta-activa-existente",
+  "title": "Alerta activa existente",
+  "status": 409,
+  "detail": "Ya existe una alerta activa para ese galpón.",
+  "instance": "/api/v1/alertas-mantenimiento",
+  "code": "ALERTA_ACTIVA_EXISTENTE"
+}

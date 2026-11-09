@@ -17,6 +17,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
+import com.unimag.avicontrol.application.port.in.galpon.EditarGalponUseCase;
+import com.unimag.avicontrol.domain.exception.ValidacionNegocioException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.DetalleGalpon;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.HistorialLotes;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.Incidencia;
@@ -75,6 +79,9 @@ class GalponControllerTest {
     @MockitoBean
     private ActualizarEstadoUseCase actualizarEstado;
 
+    @MockitoBean
+    private EditarGalponUseCase editarGalpon;
+
     /** 2026-10-05 10:00 en America/Bogota: "hoy" para las consultas con edad de lote. */
     @TestConfiguration
     static class RelojFijo {
@@ -102,6 +109,19 @@ class GalponControllerTest {
 
         FixtureJson.assertCoincide("galpon-registrar-response.json", resultado);
         verify(registrarGalpon).registrar(new Comando("Galpón Norte", 1500));
+    }
+
+    @Test
+    void siLaBaseDeDatosFallaAlRegistrarDevuelve500ErrorInternoSinMostrarLaCausa() throws Exception {
+        when(registrarGalpon.registrar(any()))
+                .thenThrow(new DataAccessResourceFailureException("Connection to localhost:5432 refused"));
+
+        MvcResult resultado = enviar(FixtureJson.texto("galpon-registrar-request.json"));
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(500);
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getContentAsString())
+                .contains("\"code\":\"ERROR_INTERNO\"", "No fue posible completar la operación. Intenta de nuevo.")
+                .doesNotContain("5432", "refused");
     }
 
     @Test
@@ -696,5 +716,198 @@ class GalponControllerTest {
         mvc.perform(get(RUTA + "/abc/historial-estados"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"));
+    }
+
+    // ------------------------------------------------- PATCH /galpones/{id} (US9)
+
+    private static final String RUTA_EDITAR = RUTA + "/" + ID;
+
+    private MvcResult editar(String json) throws Exception {
+        return mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON).content(json)).andReturn();
+    }
+
+    @Test
+    void editarElNombreDevuelve200ConElGalponEditado() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando("Galpón Norte", null)))
+                .thenReturn(new Galpon(ID, "Galpón Norte", 1500, EstadoGalpon.DISPONIBLE, 1L));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-editar-nombre-request.json")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(ID.toString()))
+                .andExpect(jsonPath("$.nombre").value("Galpón Norte"))
+                .andExpect(jsonPath("$.capacidad").value(1500))
+                .andExpect(jsonPath("$.estado").value("DISPONIBLE"));
+    }
+
+    @Test
+    void editarLaCapacidadDevuelve200ConElFixture() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando(null, 1500L)))
+                .thenReturn(new Galpon(ID, "Galpón Norte", 1500, EstadoGalpon.MANTENIMIENTO, 1L));
+
+        MvcResult resultado = mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-editar-capacidad-request.json")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        FixtureJson.assertCoincide("galpon-editar-response.json", resultado);
+    }
+
+    @Test
+    void editarNombreYCapacidadJuntosPasaAmbosCamposAlPuerto() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando("Galpón Norte B", 1800L)))
+                .thenReturn(new Galpon(ID, "Galpón Norte B", 1800, EstadoGalpon.MANTENIMIENTO, 1L));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"Galpón Norte B\", \"capacidad\": 1800}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Galpón Norte B"))
+                .andExpect(jsonPath("$.capacidad").value(1800));
+    }
+
+    @Test
+    void editarRecortaLosEspaciosDelNombre() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando("Galpón Norte", null)))
+                .thenReturn(new Galpon(ID, "Galpón Norte", 1500, EstadoGalpon.DISPONIBLE, 1L));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"  Galpón Norte  \"}"))
+                .andExpect(status().isOk());
+
+        verify(editarGalpon).editar(ID, new EditarGalponUseCase.Comando("Galpón Norte", null));
+    }
+
+    @Test
+    void editarCapacidadFueraDeMantenimientoDevuelve409ConElFixture() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando(null, 1500L))).thenThrow(
+                new ConflictoException("CAPACIDAD_NO_EDITABLE",
+                        "La capacidad solo se puede modificar cuando el galpón está en mantenimiento."));
+
+        MvcResult resultado = editar(FixtureJson.texto("galpon-editar-capacidad-request.json"));
+
+        org.assertj.core.api.Assertions.assertThat(resultado.getResponse().getStatus()).isEqualTo(409);
+        FixtureJson.assertCoincide("error-capacidad-no-editable.json", resultado);
+    }
+
+    @Test
+    void editarConElNombreDeOtroGalponDevuelve409NombreDuplicado() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando("Galpón B", null)))
+                .thenThrow(ConflictoException.nombreDuplicado("Ya existe un galpón con ese nombre."));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON).content("{\"nombre\": \"Galpón B\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("NOMBRE_DUPLICADO"))
+                .andExpect(jsonPath("$.instance").value(RUTA_EDITAR))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("nombre"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("DUPLICADO"));
+    }
+
+    @ParameterizedTest(name = "nombre \"{0}\" devuelve 400 NOMBRE_INVALIDO")
+    @CsvSource(delimiter = '|', value = {"''|LONGITUD_INVALIDA", "'   '|LONGITUD_INVALIDA",
+            "Galpón #1|FORMATO_INVALIDO"})
+    void editarConUnNombreInvalidoDevuelve400(String nombre, String codigoCampo) throws Exception {
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"" + nombre.replace("'", "") + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("NOMBRE_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("nombre"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value(codigoCampo));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @Test
+    void editarConUnNombreDeMasDe100CaracteresDevuelve400() throws Exception {
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"" + "A".repeat(101) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("NOMBRE_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("LONGITUD_INVALIDA"));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @ParameterizedTest(name = "capacidad {0} devuelve 400 CAPACIDAD_INVALIDA")
+    @ValueSource(strings = {"0", "-5", "10.5", "\"abc\""})
+    void editarConUnaCapacidadQueNoEsEnteroPositivoDevuelve400(String capacidad) throws Exception {
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"capacidad\": " + capacidad + "}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CAPACIDAD_INVALIDA"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("capacidad"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("ENTERO_POSITIVO"));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @ParameterizedTest(name = "body {0} devuelve 400 SIN_CAMBIOS")
+    @ValueSource(strings = {"{}", "{\"nombre\": null, \"capacidad\": null}"})
+    void editarSinNingunCampoConValorDevuelve400SinCambios(String body) throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando(null, null))).thenThrow(
+                new ValidacionNegocioException("SIN_CAMBIOS",
+                        "Indica al menos un campo para modificar: nombre o capacidad."));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SIN_CAMBIOS"))
+                .andExpect(jsonPath("$.detail").value("Indica al menos un campo para modificar: nombre o capacidad."));
+    }
+
+    @Test
+    void editarUnGalponInexistenteDevuelve404() throws Exception {
+        UUID otro = UUID.fromString("d9b2d63d-a233-4123-847a-3f2c0c1e6b55");
+        when(editarGalpon.editar(otro, new EditarGalponUseCase.Comando("Galpón Norte", null))).thenThrow(
+                new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+
+        mvc.perform(patch(RUTA + "/" + otro).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-editar-nombre-request.json")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("GALPON_NO_ENCONTRADO"))
+                .andExpect(jsonPath("$.instance").value(RUTA + "/" + otro));
+    }
+
+    @Test
+    void editarConGalponIdQueNoEsUuidDevuelve400() throws Exception {
+        mvc.perform(patch(RUTA + "/abc").contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-editar-nombre-request.json")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAMETRO_INVALIDO"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("galponId"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("FORMATO_INVALIDO"));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @Test
+    void editarConDosCamposInvalidosADaLaVezDevuelve400ValidacionFallida() throws Exception {
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"Galpón #1\", \"capacidad\": 0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"))
+                .andExpect(jsonPath("$.fieldErrors.length()").value(2));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @Test
+    void editarConUnCuerpoQueNoEsJsonDevuelve400CuerpoInvalido() throws Exception {
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON).content("{\"nombre\": "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CUERPO_INVALIDO"));
+
+        verifyNoInteractions(editarGalpon);
+    }
+
+    @Test
+    void editarConUnaModificacionSimultaneaDevuelve409ConflictoDeConcurrencia() throws Exception {
+        when(editarGalpon.editar(ID, new EditarGalponUseCase.Comando("Galpón Norte", null)))
+                .thenThrow(new OptimisticLockingFailureException("version"));
+
+        mvc.perform(patch(RUTA_EDITAR).contentType(MediaType.APPLICATION_JSON)
+                        .content(FixtureJson.texto("galpon-editar-nombre-request.json")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLICTO_CONCURRENCIA"))
+                .andExpect(jsonPath("$.detail").value(
+                        "Otro usuario modificó el registro al mismo tiempo. Actualiza la información e inténtalo de nuevo."));
     }
 }
