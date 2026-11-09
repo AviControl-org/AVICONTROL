@@ -1,5 +1,7 @@
 package com.unimag.avicontrol.application.galpon;
 
+import com.unimag.avicontrol.domain.port.out.galpon.HistorialEstadoRepository;
+import com.unimag.avicontrol.application.usecase.galpon.GalponEstadoService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.never;
@@ -43,12 +45,16 @@ class GalponServiceConsultaTest {
     private GalponRepository galpones;
     @Mock
     private LoteRepository lotes;
+    @Mock
+    private HistorialEstadoRepository historialEstados;
+    @Mock
+    private GalponEstadoService estados;
 
     private GalponService servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new GalponService(galpones, lotes);
+        servicio = new GalponService(galpones, lotes, historialEstados, estados);
     }
 
     private static ConsultaGalpones consulta(String nombre, EstadoGalpon estado) {

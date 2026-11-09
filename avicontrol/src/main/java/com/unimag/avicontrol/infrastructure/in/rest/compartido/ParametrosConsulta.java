@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 public final class ParametrosConsulta {
 
     public static final int TAMANIO_PAGINA_FIJO = 10;
+    public static final int TAMANIO_PAGINA_POR_DEFECTO = 20;
+    public static final int TAMANIO_PAGINA_MAXIMO = 100;
 
     private ParametrosConsulta() {
     }
@@ -26,6 +28,14 @@ public final class ParametrosConsulta {
             throw invalido("page", "MINIMO_1", "Debe ser mayor o igual a 1");
         }
         return page;
+    }
+
+    /** Tamaño de página de los historiales: entre 1 y 100. */
+    public static int tamanio(int size) {
+        if (size < 1 || size > TAMANIO_PAGINA_MAXIMO) {
+            throw invalido("size", "FUERA_DE_RANGO", "Debe estar entre 1 y " + TAMANIO_PAGINA_MAXIMO);
+        }
+        return size;
     }
 
     /** {@code estado} ausente o vacío significa "sin filtro". */

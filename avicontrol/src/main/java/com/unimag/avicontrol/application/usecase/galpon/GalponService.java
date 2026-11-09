@@ -1,5 +1,11 @@
 package com.unimag.avicontrol.application.usecase.galpon;
 
+import com.unimag.avicontrol.domain.port.out.galpon.HistorialEstadoRepository;
+import com.unimag.avicontrol.domain.policy.galpon.TransicionesPermitidas;
+import com.unimag.avicontrol.domain.model.galpon.OrigenCambioEstado;
+import com.unimag.avicontrol.domain.model.galpon.HistorialEstado;
+import com.unimag.avicontrol.domain.model.galpon.EstadoGalpon;
+import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.RegistrarGalponUseCase;
 import com.unimag.avicontrol.domain.exception.ConflictoException;
@@ -19,18 +25,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Casos de uso del galpón. Esta clase crece con cada historia: por ahora registra (US1) y consulta (US3); actualizar
- * estado y editar se agregan con sus planes, junto con sus dependencias.
+ * Casos de uso del galpón. Esta clase crece con cada historia: por ahora registra (US1), consulta (US3) y actualiza el
+ * estado (US4); editar se agregan con sus planes, junto con sus dependencias.
  */
 @Service
-public class GalponService implements RegistrarGalponUseCase, ConsultarGalponUseCase {
+public class GalponService implements RegistrarGalponUseCase, ConsultarGalponUseCase, ActualizarEstadoUseCase {
 
     private final GalponRepository galpones;
     private final LoteRepository lotes;
+    private final HistorialEstadoRepository historialEstados;
+    private final GalponEstadoService estados;
 
-    public GalponService(GalponRepository galpones, LoteRepository lotes) {
+    public GalponService(GalponRepository galpones, LoteRepository lotes, HistorialEstadoRepository historialEstados,
+                         GalponEstadoService estados) {
         this.galpones = galpones;
         this.lotes = lotes;
+        this.historialEstados = historialEstados;
+        this.estados = estados;
     }
 
     @Override
@@ -100,5 +111,41 @@ public class GalponService implements RegistrarGalponUseCase, ConsultarGalponUse
                     "La fecha de ingreso del lote no está disponible; no se puede calcular la edad."));
         }
         return incidencias;
+    }
+
+    @Override
+    @Transactional
+    public HistorialEstado actualizarEstado(UUID galponId, EstadoGalpon estadoEsperado, EstadoGalpon estadoDestino) {
+        Galpon galpon = galpones.findById(galponId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+        if (galpon.estado() != estadoEsperado) {
+            throw new ConflictoException("ESTADO_ESPERADO_CAMBIADO",
+                    "El estado del galpón cambió. Actualiza la información e inténtalo de nuevo.");
+        }
+        if (!TransicionesPermitidas.destinosManuales(galpon.estado()).contains(estadoDestino)) {
+            // Existe en la matriz pero no es del administrador por este servicio -> origen; si no existe -> transición
+            throw TransicionesPermitidas.existe(galpon.estado(), estadoDestino)
+                    ? TransicionesPermitidas.origenNoAutorizado(OrigenCambioEstado.ADMINISTRADOR)
+                    : TransicionesPermitidas.transicionNoPermitida();
+        }
+        // El estado se escribe solo en GalponEstadoService, que lo vuelve a validar bajo el bloqueo del galpón.
+        return estados.solicitarCambio(galponId, estadoEsperado, estadoDestino, OrigenCambioEstado.ADMINISTRADOR);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TransicionesDisponibles transiciones(UUID galponId) {
+        Galpon galpon = galpones.findById(galponId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+        return new TransicionesDisponibles(galponId, galpon.estado(),
+                TransicionesPermitidas.destinosManuales(galpon.estado()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<HistorialEstado> historial(UUID galponId, int pagina, int tamanio) {
+        galpones.findById(galponId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón no existe."));
+        return historialEstados.findByGalponId(galponId, pagina, tamanio);
     }
 }

@@ -1,5 +1,12 @@
 package com.unimag.avicontrol.infrastructure.in.rest.mapper.galpon;
 
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.TransicionesDisponiblesResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.HistorialEstadoResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.HistorialEstadoPaginaResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.CambioEstadoResponse;
+import com.unimag.avicontrol.domain.model.compartido.ZonaNegocio;
+import com.unimag.avicontrol.domain.model.galpon.HistorialEstado;
+import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase.TransicionesDisponibles;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.DetalleGalpon;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.HistorialLotes;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase.Incidencia;
@@ -57,5 +64,22 @@ public final class GalponRestMapper {
     private static List<IncidenciaResponse> aIncidencias(List<Incidencia> incidencias) {
         return incidencias.isEmpty() ? null
                 : incidencias.stream().map(i -> new IncidenciaResponse(i.codigo(), i.mensaje())).toList();
+    }
+
+    public static CambioEstadoResponse aCambio(HistorialEstado h) {
+        return new CambioEstadoResponse(h.galponId(), h.estadoAnterior(), h.estadoNuevo(), h.origen(),
+                h.fechaHora().atZone(ZonaNegocio.BOGOTA).toOffsetDateTime());
+    }
+
+    public static TransicionesDisponiblesResponse aTransiciones(TransicionesDisponibles t) {
+        return new TransicionesDisponiblesResponse(t.galponId(), t.estadoActual(), t.destinos());
+    }
+
+    public static HistorialEstadoPaginaResponse aHistorialEstados(Pagina<HistorialEstado> p) {
+        List<HistorialEstadoResponse> contenido = p.contenido().stream()
+                .map(h -> new HistorialEstadoResponse(h.id(), h.galponId(), h.estadoAnterior(), h.estadoNuevo(),
+                        h.fechaHora().atZone(ZonaNegocio.BOGOTA).toOffsetDateTime(), h.origen())).toList();
+        return new HistorialEstadoPaginaResponse(contenido, p.pagina(), p.tamanio(), p.totalElementos(),
+                p.totalPaginas());
     }
 }

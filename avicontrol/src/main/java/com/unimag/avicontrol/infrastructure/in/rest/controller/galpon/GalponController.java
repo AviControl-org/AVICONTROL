@@ -1,5 +1,11 @@
 package com.unimag.avicontrol.infrastructure.in.rest.controller.galpon;
 
+import org.springframework.web.bind.annotation.PatchMapping;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.TransicionesDisponiblesResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.HistorialEstadoPaginaResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.CambioEstadoResponse;
+import com.unimag.avicontrol.infrastructure.in.rest.dto.galpon.ActualizarEstadoRequest;
+import com.unimag.avicontrol.application.port.in.galpon.ActualizarEstadoUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.ConsultarGalponUseCase;
 import com.unimag.avicontrol.application.port.in.galpon.RegistrarGalponUseCase;
 import com.unimag.avicontrol.domain.model.galpon.ConsultaGalpones;
@@ -32,12 +38,14 @@ public class GalponController {
 
     private final RegistrarGalponUseCase registrarGalpon;
     private final ConsultarGalponUseCase consultarGalpon;
+    private final ActualizarEstadoUseCase actualizarEstado;
     private final Clock clock;
 
     public GalponController(RegistrarGalponUseCase registrarGalpon, ConsultarGalponUseCase consultarGalpon,
-                            Clock clock) {
+                            ActualizarEstadoUseCase actualizarEstado, Clock clock) {
         this.registrarGalpon = registrarGalpon;
         this.consultarGalpon = consultarGalpon;
+        this.actualizarEstado = actualizarEstado;
         this.clock = clock;
     }
 
@@ -71,5 +79,26 @@ public class GalponController {
     @GetMapping("/{galponId}/lotes")
     public LoteHistorialResponse historialLotes(@PathVariable UUID galponId) {
         return GalponRestMapper.aHistorial(consultarGalpon.historialLotes(galponId), ReglasFecha.hoy(clock));
+    }
+
+    @GetMapping("/{galponId}/transiciones")
+    public TransicionesDisponiblesResponse transiciones(@PathVariable UUID galponId) {
+        return GalponRestMapper.aTransiciones(actualizarEstado.transiciones(galponId));
+    }
+
+    @PatchMapping("/{galponId}/estado")
+    public CambioEstadoResponse actualizarEstado(@PathVariable UUID galponId,
+                                                 @Valid @RequestBody ActualizarEstadoRequest request) {
+        return GalponRestMapper.aCambio(
+                actualizarEstado.actualizarEstado(galponId, request.estadoEsperado(), request.estadoDestino()));
+    }
+
+    @GetMapping("/{galponId}/historial-estados")
+    public HistorialEstadoPaginaResponse historialEstados(
+            @PathVariable UUID galponId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "" + ParametrosConsulta.TAMANIO_PAGINA_POR_DEFECTO) int size) {
+        return GalponRestMapper.aHistorialEstados(
+                actualizarEstado.historial(galponId, ParametrosConsulta.pagina(page), ParametrosConsulta.tamanio(size)));
     }
 }
