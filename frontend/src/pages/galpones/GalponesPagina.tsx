@@ -11,8 +11,8 @@ import { Icono } from '../../components/Icono'
 import { PageHeader } from '../../components/PageHeader'
 import { Pager } from '../../components/Pager'
 import { StatusChip } from '../../components/StatusChip'
-import type { AvisoListado } from './avisoListado'
-import { ErrorDeConsulta } from './ErrorDeConsulta'
+import type { AvisoListado } from '../aviso'
+import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
 
 type Orden = NonNullable<ParametrosListado['orden']>
 

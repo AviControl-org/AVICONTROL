@@ -18,7 +18,7 @@ export interface LoteSimulado {
   poblacionInicial: number
   poblacionActual: number
   costoTotal: number
-  /** Fecha (yyyy-MM-dd) en que se desvinculó; ausente = lote activo. */
+  /** Instante ISO-8601 con desplazamiento en que se desvinculó; ausente = lote activo. */
   desvinculadoEn?: string
 }
 
@@ -56,7 +56,7 @@ export const lotes: LoteSimulado[] = [
     poblacionInicial: 1000,
     poblacionActual: 940,
     costoTotal: 5000000,
-    desvinculadoEn: '2026-08-21',
+    desvinculadoEn: '2026-08-21T08:15:00-05:00',
   },
   // Ejemplo 12 del plan: lote activo sin nombre ("No disponible").
   {

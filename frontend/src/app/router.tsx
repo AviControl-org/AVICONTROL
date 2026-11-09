@@ -3,6 +3,8 @@ import { AppShell } from '../components/AppShell'
 import { GalponDetallePagina } from '../pages/galpones/GalponDetallePagina'
 import { GalponesPagina } from '../pages/galpones/GalponesPagina'
 import { RegistrarGalponPagina } from '../pages/galpones/RegistrarGalponPagina'
+import { LotesPagina } from '../pages/lotes/LotesPagina'
+import { RegistrarLotePagina } from '../pages/lotes/RegistrarLotePagina'
 import { PaginaPendiente } from '../pages/PaginaPendiente'
 
 // Una ruta por pantalla de los mockups. La fase es la de docs/plan-general/plan-modulo-1.md.
@@ -44,14 +46,11 @@ export const router = createBrowserRouter([
         path: 'lotes',
         handle: { miga: 'Lotes' },
         children: [
-          {
-            index: true,
-            element: <PaginaPendiente titulo="Lotes activos" spec="Registrar lote (US2)" fase="Phase 4" />,
-          },
+          { index: true, element: <LotesPagina /> },
           {
             path: 'registrar',
             handle: { miga: 'Registrar lote' },
-            element: <PaginaPendiente titulo="Registrar lote" spec="Registrar lote (US2)" fase="Phase 4" />,
+            element: <RegistrarLotePagina />,
           },
         ],
       },

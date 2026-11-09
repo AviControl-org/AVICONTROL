@@ -20,6 +20,11 @@ export function enteroPositivo(texto: string): number | null {
   return valor > 0 && Number.isSafeInteger(valor) ? valor : null
 }
 
+/** Fecha de hoy (`yyyy-MM-dd`) en la zona de negocio America/Bogota, para la regla de "fecha no futura". */
+export function hoyEnBogota(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
+}
+
 /** Errores por campo que devolvió el servidor, indexados por nombre de campo. */
 export function erroresDelServidor(error: unknown): Record<string, { code: string; message: string }> {
   if (!(error instanceof ErrorApi)) return {}

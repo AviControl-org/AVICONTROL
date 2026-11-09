@@ -1,6 +1,6 @@
-import { ErrorApi, ErrorDeConexion } from '../../api/cliente'
-import { Banner } from '../../components/Banner'
-import { Icono } from '../../components/Icono'
+import { ErrorApi, ErrorDeConexion } from '../api/cliente'
+import { Banner } from './Banner'
+import { Icono } from './Icono'
 
 interface ErrorDeConsultaProps {
   error: Error

@@ -69,6 +69,17 @@ export function listarGalpones(parametros: ParametrosListado): Promise<GalponPag
   return solicitar(`/galpones?${query}`)
 }
 
+/** Todos los galpones en `estado`, recorriendo las páginas de 10 (selector de registrar lote, FR-002). */
+export async function listarTodosLosGalpones(estado: EstadoGalpon): Promise<GalponResumenResponse[]> {
+  const primera = await listarGalpones({ estado, orden: 'nombre,asc', page: 1 })
+  const resto = await Promise.all(
+    Array.from({ length: Math.max(primera.totalPaginas - 1, 0) }, (_, i) =>
+      listarGalpones({ estado, orden: 'nombre,asc', page: i + 2 }),
+    ),
+  )
+  return [primera, ...resto].flatMap((pagina) => pagina.contenido)
+}
+
 // DTO de docs/spec-registrarGalpon/plan-registrar-galpon.md, sección Contrato.
 
 export interface RegistrarGalponRequest {

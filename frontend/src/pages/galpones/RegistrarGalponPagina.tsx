@@ -8,7 +8,7 @@ import { Field } from '../../components/Field'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusChip } from '../../components/StatusChip'
 import { enteroPositivo, erroresDelServidor, nombreValido } from '../validacion'
-import type { AvisoListado } from './avisoListado'
+import type { AvisoListado } from '../aviso'
 
 // Textos fijos de error de docs/spec-registrarGalpon/plan-registrar-galpon.md.
 const TEXTO = {

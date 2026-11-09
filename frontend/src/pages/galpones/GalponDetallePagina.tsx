@@ -10,7 +10,7 @@ import { Icono } from '../../components/Icono'
 import { PageHeader } from '../../components/PageHeader'
 import { StatTile } from '../../components/StatTile'
 import { StatusChip } from '../../components/StatusChip'
-import { ErrorDeConsulta } from './ErrorDeConsulta'
+import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
 
 /** Un campo del lote que la API omitió por estar vacío o inválido se muestra como "No disponible" (FR-016). */
 function oNoDisponible<T>(valor: T | undefined, mostrar: (valor: T) => ReactNode): ReactNode {
@@ -149,7 +149,7 @@ export function GalponDetallePagina() {
               {galpon.estado === 'DISPONIBLE' && (
                 <>
                   <p className="mut">Registra un lote para iniciar la crianza.</p>
-                  <Link className="btn" to="/lotes/registrar">
+                  <Link className="btn" to={`/lotes/registrar?galponId=${galpon.id}`}>
                     <Icono nombre="mas" />
                     Registrar lote
                   </Link>

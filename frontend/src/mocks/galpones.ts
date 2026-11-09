@@ -13,7 +13,7 @@ const CAMPOS_ORDEN = ['nombre', 'capacidad', 'estado'] as const
 /** Permite ver en la demo el estado "Error durante la consulta" (escenario 12 del spec). */
 export const CLAVE_SIMULAR_ERROR = 'avicontrol.simular-error-consulta'
 
-function simularError(): boolean {
+export function simularError(): boolean {
   try {
     return localStorage.getItem(CLAVE_SIMULAR_ERROR) === 'true'
   } catch {
@@ -21,7 +21,7 @@ function simularError(): boolean {
   }
 }
 
-function problema(status: number, codigo: string, titulo: string, detalle: string, instancia: string, errores?: ErrorDeCampo[]) {
+export function problema(status: number, codigo: string, titulo: string, detalle: string, instancia: string, errores?: ErrorDeCampo[]) {
   const cuerpo: ProblemDetail = {
     type: `https://avicontrol.unimag.edu.co/errors/${codigo.toLowerCase().replaceAll('_', '-')}`,
     title: titulo,
@@ -43,7 +43,7 @@ const errorConsulta = (instancia: string) =>
 const galponNoEncontrado = (instancia: string) =>
   problema(404, 'GALPON_NO_ENCONTRADO', 'Galpón no encontrado', 'El galpón consultado no existe.', instancia)
 
-function hoyBogota(): string {
+export function hoyBogota(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
 }
 
@@ -63,20 +63,20 @@ function aRespuesta(lote: LoteSimulado, incidencias: IncidenciaResponse[]): Lote
     poblacionInicial: lote.poblacionInicial,
     poblacionActual: lote.poblacionActual,
     fechaIngreso: lote.fechaIngreso,
-    edadDias: edadDias(lote.fechaIngreso, lote.desvinculadoEn ?? hoyBogota()),
+    edadDias: edadDias(lote.fechaIngreso, lote.desvinculadoEn?.slice(0, 10) ?? hoyBogota()),
     costoTotal: lote.costoTotal,
   }
 }
 
 // Mensajes de fieldErrors del backend (CatalogoErrores).
-const MENSAJE_CAMPO = {
+export const MENSAJE_CAMPO = {
   OBLIGATORIO: 'Es obligatorio',
   LONGITUD_INVALIDA: 'Longitud fuera del rango permitido',
   FORMATO_INVALIDO: 'Formato no válido',
   ENTERO_POSITIVO: 'Debe ser un entero mayor que cero',
 } as const
 
-function errorDeNombre(valor: unknown): ErrorDeCampo | null {
+export function errorDeNombre(valor: unknown): ErrorDeCampo | null {
   const nombre = typeof valor === 'string' ? valor.trim() : ''
   if (nombre === '') return { field: 'nombre', code: 'OBLIGATORIO', message: MENSAJE_CAMPO.OBLIGATORIO }
   if (nombre.length > 100) return { field: 'nombre', code: 'LONGITUD_INVALIDA', message: MENSAJE_CAMPO.LONGITUD_INVALIDA }
