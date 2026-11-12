@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { ErrorApi, ErrorDeConexion } from '../../api/cliente'
 import { listarTodosLosGalpones } from '../../api/galpones'
-import { registrarLote } from '../../api/lotes'
+import { listarLotes, registrarLote } from '../../api/lotes'
 import { Banner } from '../../components/Banner'
 import { EmptyState } from '../../components/EmptyState'
 import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
@@ -12,7 +12,7 @@ import { formatoEntero } from '../../components/formato'
 import { Icono } from '../../components/Icono'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusChip } from '../../components/StatusChip'
-import type { AvisoListado } from '../aviso'
+import { rutaDelRegistro } from '../aviso'
 import { enteroPositivo, erroresDelServidor, hoyEnBogota, nombreValido } from '../validacion'
 
 // Textos fijos de error de docs/spec-registrarLote/plan-registrar-lote.md.
@@ -97,12 +97,13 @@ export function RegistrarLotePagina() {
         consultas.invalidateQueries({ queryKey: ['galpones'] }),
         consultas.invalidateQueries({ queryKey: ['galpon'] }),
       ])
-      const aviso: AvisoListado = {
+      const aviso = {
         titulo: `${lote.nombre} registrado`,
         detalle: `La población actual quedó igual a la inicial (${formatoEntero(lote.poblacionActual)} pollos). Se remitió a Actualizar estado la solicitud Disponible → Productivo ${galpon ? `del ${galpon.nombre}` : 'del galpón'}.`,
         resaltarId: lote.id,
       }
-      navegar('/lotes', { state: aviso })
+      const destino = await rutaDelRegistro('/lotes', aviso, listarLotes)
+      navegar(destino.ruta, { state: destino.aviso })
     },
     onError: (error) => {
       setErrores(erroresDeRespuesta(error))

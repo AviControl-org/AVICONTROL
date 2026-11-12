@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { ErrorApi } from '../../api/cliente'
 import { obtenerGalpon, obtenerHistorialLotes, type LoteDetalleResponse } from '../../api/galpones'
@@ -15,6 +15,22 @@ import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
 /** Un campo del lote que la API omitió por estar vacío o inválido se muestra como "No disponible" (FR-016). */
 function oNoDisponible<T>(valor: T | undefined, mostrar: (valor: T) => ReactNode): ReactNode {
   return valor === undefined ? <span className="na">No disponible</span> : mostrar(valor)
+}
+
+function IdentificadorLote({ id }: { id: string }) {
+  const [mensaje, setMensaje] = useState('')
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(id)
+      setMensaje('Identificador copiado.')
+    } catch {
+      setMensaje('Selecciona el identificador y cópialo manualmente.')
+    }
+  }
+  return <>
+    <div className="row wrap"><code>{id}</code><button className="btn sm" type="button" onClick={copiar}>Copiar</button></div>
+    <span className="cap" role="status">{mensaje}</span>
+  </>
 }
 
 function textoONoDisponible<T>(valor: T | undefined, mostrar: (valor: T) => string): string {
@@ -91,34 +107,28 @@ export function GalponDetallePagina() {
             </Link>
             <Link className="btn p" to={`/galpones/${galpon.id}/estado`}>
               <Icono nombre="reintentar" />
-              Actualizar estado
+              Ver estado e historial
             </Link>
           </>
         }
       />
 
-      <div className="g2" style={{ alignItems: 'stretch' }}>
+      <div className="detalle-resumen">
         <section className="card lg">
           <h2 className="h3">Galpón</h2>
-          <dl className="kv">
-            <dt>Nombre</dt>
-            <dd className="b6">{galpon.nombre}</dd>
-            <dt>Capacidad</dt>
-            <dd className="data">{formatoEntero(galpon.capacidad)} pollos</dd>
-            <dt>Estado</dt>
-            <dd>
-              <StatusChip estado={galpon.estado} />
-            </dd>
+          <dl className="datos-galpon">
+            <div><dt>Nombre</dt><dd className="b6">{galpon.nombre}</dd></div>
+            <div><dt>Capacidad</dt><dd className="data">{formatoEntero(galpon.capacidad)} pollos</dd></div>
+            <div><dt>Estado</dt><dd><StatusChip estado={galpon.estado} /></dd></div>
           </dl>
         </section>
 
         <section className="card lg">
           <div className="ch">
-            <h2 className="h3">Lote activo</h2>
-            {lote && <span className="cap">El de ingreso más reciente</span>}
+            <h2 className="h3">Lote activo{lote && <> · {oNoDisponible(lote.nombre, nombre => nombre)}</>}</h2>
           </div>
           {lote ? (
-            <div className="col">
+            <div className="datos-lote-activo">
               <div className="g3" style={{ gap: 'var(--space-3)' }}>
                 <StatTile
                   etiqueta="Población inicial"
@@ -134,10 +144,8 @@ export function GalponDetallePagina() {
                 <StatTile etiqueta="Edad del lote" valor={textoONoDisponible(lote.edadDias, String)} unidad="días" />
               </div>
               <dl className="kv">
-                <dt>Nombre del lote</dt>
-                <dd className="data">{oNoDisponible(lote.nombre, (nombre) => nombre)}</dd>
-                <dt>Identificador (UUID)</dt>
-                <dd className="data">{lote.id}</dd>
+                <dt>Identificador técnico</dt>
+                <dd><IdentificadorLote key={lote.id} id={lote.id}/></dd>
                 <dt>Fecha de ingreso</dt>
                 <dd className="data">{oNoDisponible(lote.fechaIngreso, formatoFecha)}</dd>
                 <dt>Costo total</dt>

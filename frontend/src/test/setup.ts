@@ -15,3 +15,8 @@ afterEach(() => {
   localStorage.clear()
 })
 afterAll(() => servidor.close())
+// jsdom no implementa la apertura modal ni el cierre de HTMLDialogElement.
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function () { this.open = true }
+  HTMLDialogElement.prototype.close = function () { this.open = false }
+}

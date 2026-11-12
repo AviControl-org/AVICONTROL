@@ -135,7 +135,8 @@ export function GalponesPagina() {
         </div>
       </div>
 
-      <nav className="seg" aria-label="Filtrar por estado">
+      <div className="filtros-estado"><span id="titulo-filtro" className="lbl">Filtrar por estado</span>
+      <nav className="seg" aria-labelledby="titulo-filtro">
         <button
           type="button"
           className={criterios.estado ? undefined : 'on'}
@@ -155,7 +156,7 @@ export function GalponesPagina() {
             {ESTADO_GALPON[estado].texto}
           </button>
         ))}
-      </nav>
+      </nav></div>
 
       {consulta.isError && (
         <ErrorDeConsulta
@@ -181,12 +182,14 @@ export function GalponesPagina() {
 
       {datos && datos.totalElementos === 0 && !consulta.isError && (
         <section className="card">
-          <EmptyState titulo="Todavía no hay galpones registrados">
+          {criterios.estado ? <EmptyState titulo={'No hay galpones en ' + ESTADO_GALPON[criterios.estado].texto}>
+            <button type="button" className="btn" onClick={() => actualizar({ estado: undefined, page: undefined })}>Quitar filtro</button>
+          </EmptyState> : <EmptyState titulo="Todavía no hay galpones registrados">
             <Link className="btn p" to="/galpones/registrar">
               <Icono nombre="mas" />
               Registrar galpón
             </Link>
-          </EmptyState>
+          </EmptyState>}
         </section>
       )}
 
@@ -219,14 +222,11 @@ export function GalponesPagina() {
                   </td>
                   <td>
                     <div className="acts">
-                      <Link className="btn t sm" to={`/galpones/${galpon.id}`}>
-                        Detalle
-                      </Link>
                       <Link className="btn t sm" to={`/galpones/${galpon.id}/editar`}>
                         Editar
                       </Link>
                       <Link className="btn t sm" to={`/galpones/${galpon.id}/estado`}>
-                        Actualizar estado
+                        Ver estado e historial
                       </Link>
                     </div>
                   </td>

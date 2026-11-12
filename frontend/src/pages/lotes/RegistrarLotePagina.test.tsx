@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { LotesPagina } from './LotesPagina'
 import { RegistrarLotePagina } from './RegistrarLotePagina'
+import { lotes } from '../../mocks/datos'
 
 function renderizarFlujo(ruta = '/lotes/registrar') {
   const consultas = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -20,6 +21,7 @@ function renderizarFlujo(ruta = '/lotes/registrar') {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  return router
 }
 
 async function llenar(campos: { galpon?: string; nombre?: string; fecha?: string; poblacion?: string; costo?: string }) {
@@ -86,6 +88,22 @@ describe('RegistrarLotePagina', () => {
 })
 
 describe('LotesPagina', () => {
+  it('abre la página del lote de ingreso anterior y resalta su fila', async () => {
+    const inicio = lotes.length
+    try {
+      for (let i = 0; i < 10; i++) {
+        lotes.push({ ...lotes[0], id: crypto.randomUUID(), nombre: 'Histórico ' + i,
+          fechaIngreso: '2024-01-01', desvinculadoEn: '2024-03-01T00:00:00Z' })
+      }
+      const router = renderizarFlujo()
+      await llenar({ galpon: 'Galpón J', nombre: 'Lote anterior', fecha: '2020-02-01', poblacion: '100', costo: '50000' })
+      expect(await screen.findByText('Lote anterior registrado')).toBeInTheDocument()
+      expect(router.state.location.search).toBe('?page=2')
+      expect((await screen.findByText('Lote anterior')).closest('tr')).toHaveClass('new')
+    } finally {
+      lotes.splice(inicio)
+    }
+  })
   it('lista activos y anteriores con el nombre de su galpón', async () => {
     renderizarFlujo('/lotes')
 

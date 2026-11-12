@@ -2,13 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ErrorApi, ErrorDeConexion } from '../../api/cliente'
-import { registrarGalpon } from '../../api/galpones'
+import { listarGalpones, registrarGalpon } from '../../api/galpones'
 import { Banner } from '../../components/Banner'
 import { Field } from '../../components/Field'
 import { PageHeader } from '../../components/PageHeader'
 import { StatusChip } from '../../components/StatusChip'
 import { enteroPositivo, erroresDelServidor, nombreValido } from '../validacion'
-import type { AvisoListado } from '../aviso'
+import { rutaDelRegistro } from '../aviso'
 
 // Textos fijos de error de docs/spec-registrarGalpon/plan-registrar-galpon.md.
 const TEXTO = {
@@ -39,12 +39,13 @@ export function RegistrarGalponPagina() {
     mutationFn: registrarGalpon,
     onSuccess: async (galpon) => {
       await consultas.invalidateQueries({ queryKey: ['galpones'] })
-      const aviso: AvisoListado = {
+      const aviso = {
         titulo: `${galpon.nombre} registrado`,
         detalle: 'Quedó con estado Disponible y con un identificador único.',
         resaltarId: galpon.id,
       }
-      navegar('/galpones', { state: aviso })
+      const destino = await rutaDelRegistro('/galpones', aviso, page => listarGalpones({ page, orden: 'nombre,asc' }))
+      navegar(destino.ruta, { state: destino.aviso })
     },
     onError: (error) => {
       const delServidor = erroresDelServidor(error)

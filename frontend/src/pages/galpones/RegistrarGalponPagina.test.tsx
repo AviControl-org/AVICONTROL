@@ -20,6 +20,7 @@ function renderizarFlujo() {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  return router
 }
 
 async function llenar(nombre: string, capacidad: string) {
@@ -31,10 +32,12 @@ async function llenar(nombre: string, capacidad: string) {
 
 describe('RegistrarGalponPagina', () => {
   it('registra el galpón y vuelve al listado con el aviso de éxito (escenario 1)', async () => {
-    renderizarFlujo()
-    await llenar('Galpón Nuevo', '1500')
+    const router = renderizarFlujo()
+    await llenar('Zona Norte', '1500')
 
-    expect(await screen.findByText('Galpón Nuevo registrado')).toBeInTheDocument()
+    expect(await screen.findByText('Zona Norte registrado')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?page=2')
+    expect((await screen.findByRole('link', { name: 'Zona Norte' })).closest('tr')).toHaveClass('new')
     expect(screen.getByText('Quedó con estado Disponible y con un identificador único.')).toBeInTheDocument()
   })
 

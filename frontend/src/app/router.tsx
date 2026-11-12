@@ -5,7 +5,11 @@ import { GalponesPagina } from '../pages/galpones/GalponesPagina'
 import { RegistrarGalponPagina } from '../pages/galpones/RegistrarGalponPagina'
 import { LotesPagina } from '../pages/lotes/LotesPagina'
 import { RegistrarLotePagina } from '../pages/lotes/RegistrarLotePagina'
-import { PaginaPendiente } from '../pages/PaginaPendiente'
+import { EstadoPagina } from '../pages/galpones/EstadoPagina'
+import { EditarPagina } from '../pages/galpones/EditarPagina'
+import { AlertasPagina } from '../pages/mantenimiento/AlertasPagina'
+import { GenerarAlertaPagina } from '../pages/mantenimiento/GenerarAlertaPagina'
+import { VistaRol } from './VistaRol'
 
 // Una ruta por pantalla de los mockups. La fase es la de docs/plan-general/plan-modulo-1.md.
 export const router = createBrowserRouter([
@@ -31,12 +35,12 @@ export const router = createBrowserRouter([
               {
                 path: 'estado',
                 handle: { miga: 'Actualizar estado' },
-                element: <PaginaPendiente titulo="Actualizar estado" spec="Actualizar estado (US4)" fase="Phase 6" />,
+                element: <VistaRol rol="ADMINISTRADOR"><EstadoPagina/></VistaRol>,
               },
               {
                 path: 'editar',
                 handle: { miga: 'Editar' },
-                element: <PaginaPendiente titulo="Editar galpón" spec="Editar galpón (US9)" fase="Phase 11" />,
+                element: <VistaRol rol="ADMINISTRADOR"><EditarPagina/></VistaRol>,
               },
             ],
           },
@@ -58,25 +62,19 @@ export const router = createBrowserRouter([
         path: 'alertas',
         handle: { miga: 'Alertas' },
         element: (
-          <PaginaPendiente
-            titulo="Alertas de mantenimiento"
-            spec="Generar alerta de mantenimiento (US8)"
-            fase="Phase 10"
-          />
+          <VistaRol rol="ADMINISTRADOR"><AlertasPagina/></VistaRol>
         ),
       },
       {
         path: 'alertas-mantenimiento/generar',
         handle: { miga: 'Alerta de mantenimiento' },
         element: (
-          <PaginaPendiente
-            titulo="Generar alerta de mantenimiento"
-            spec="Generar alerta de mantenimiento (US8)"
-            fase="Phase 10"
-          />
+          <VistaRol rol="TECNICO_INFRAESTRUCTURA"><GenerarAlertaPagina/></VistaRol>
         ),
       },
       { path: '*', element: <Navigate to="/galpones" replace /> },
     ],
   },
 ])
+
+
