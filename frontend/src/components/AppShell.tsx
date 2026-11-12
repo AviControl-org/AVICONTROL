@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useMatches } from 'react-router'
+import { Link, NavLink, Outlet, useMatches } from 'react-router'
 import { NOMBRE_ROL, useRol, type Rol } from '../app/rol-contexto'
 import { Icono, Isotipo, type NombreIcono } from './Icono'
 
@@ -28,8 +28,10 @@ export interface MigaRuta {
 export function AppShell() {
   const { rol, cambiarRol } = useRol()
   const migas = useMatches()
-    .map((ruta) => (ruta.handle as MigaRuta | undefined)?.miga)
-    .filter((miga): miga is string => Boolean(miga))
+    .flatMap(ruta => {
+      const texto = (ruta.handle as MigaRuta | undefined)?.miga
+      return texto ? [{ texto, ruta: ruta.pathname }] : []
+    })
 
   return (
     <div className="app">
@@ -53,9 +55,11 @@ export function AppShell() {
       </aside>
       <div className="main">
         <header className="top">
-          <div className="crumbs">
-            {migas.map((miga, i) => (i === migas.length - 1 ? <b key={i}>{miga}</b> : <span key={i}>{miga} ›</span>))}
-          </div>
+          <nav className="crumbs" aria-label="Ruta de navegación">
+            {migas.map(({ texto, ruta }, i) => i === migas.length - 1
+              ? <b key={ruta} aria-current="page">{texto}</b>
+              : <span key={ruta}><Link to={ruta}>{texto}</Link> <span aria-hidden="true">›</span></span>)}
+          </nav>
           <div className="who">
             <Icono nombre="usuario" />
             <label className="lbl" htmlFor="rol-demo">

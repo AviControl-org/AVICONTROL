@@ -1,6 +1,8 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { servidor } from '../../test/servidor'
 import { CLAVE_SIMULAR_ERROR } from '../../mocks/galpones'
 import { renderizar } from '../../test/renderizar'
 import { GalponesPagina } from './GalponesPagina'
@@ -21,6 +23,16 @@ describe('GalponesPagina', () => {
     const filas = within(await screen.findByRole('table')).getAllByRole('row').slice(1)
     expect(filas).toHaveLength(1)
     expect(within(filas[0]).getByText('Galpón F')).toBeInTheDocument()
+  })
+
+  it('distingue un estado sin galpones y permite quitar el filtro', async () => {
+    servidor.use(http.get('/api/v1/galpones', () => HttpResponse.json({
+      contenido: [], totalElementos: 0, totalPaginas: 0, pagina: 1, tamanio: 10, sinCoincidencias: false,
+    }), { once: true }))
+    renderizar(<GalponesPagina />, '/galpones?estado=AISLAMIENTO')
+    expect(await screen.findByText('No hay galpones en Aislamiento')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar filtro' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
   })
 
   it('sin coincidencias avisa con el mensaje de la API y muestra todos los galpones (escenario 4)', async () => {
@@ -46,3 +58,4 @@ describe('GalponesPagina', () => {
     expect(await screen.findByRole('table')).toBeInTheDocument()
   })
 })
+

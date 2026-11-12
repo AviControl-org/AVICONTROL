@@ -6,7 +6,7 @@ import { Icono } from './Icono'
 export function StatusChip({ estado }: { estado: EstadoGalpon }) {
   const { texto, tono, icono } = ESTADO_GALPON[estado]
   return (
-    <span className={`chip ${tono}`}>
+    <span className={`chip ${tono}`} data-estado={estado}>
       <Icono nombre={icono} />
       {texto}
     </span>

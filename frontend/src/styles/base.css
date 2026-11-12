@@ -101,7 +101,9 @@ textarea.input{height:112px;padding:var(--space-3);resize:none}
 .kv{display:grid;grid-template-columns:190px 1fr;gap:var(--space-3) var(--space-4);align-items:center}
 .kv dt{font:500 14px/20px var(--font-sans);color:var(--ink-muted)}.kv dd{margin:0}
 .stat{background:var(--surface-100);border:1px solid var(--line);border-radius:var(--radius-md);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-1)}
-.stat .v{font:500 28px/32px var(--font-mono)}.stat.key{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.stat.key .cap{color:var(--on-accent)}
+.stat .v{font:500 28px/32px var(--font-mono)}
+.stat.key{background:#edf4e9;border-color:#c4d6bc}
+.stat.key .v{font-size:32px;line-height:36px;font-weight:700}
 .na{color:var(--ink-muted);font-style:italic}
 
 /* Timeline */
@@ -129,3 +131,51 @@ textarea.input{height:112px;padding:var(--space-3);resize:none}
 
 /* Selector de rol solo para la demostración (P-01: sin autenticación) */
 .rol-demo{height:36px;padding:0 var(--space-3);border:1px dashed var(--earth);border-radius:var(--radius-sm);background:var(--surface-100);color:var(--ink);font:500 14px/20px var(--font-sans)}
+.confirmacion {
+  margin: auto;
+  padding: 0;
+  width: min(28rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  color: var(--ink);
+  background: var(--surface-100);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+}
+.confirmacion::backdrop { background: rgb(31 42 23 / 50%); }
+.confirmacion-cuerpo { padding: var(--space-6); display: grid; gap: var(--space-3); }
+.confirmacion-cuerpo p { color: var(--ink-muted); overflow-wrap: anywhere; }
+.confirmacion-icono { display: grid; place-items: center; width: 40px; height: 40px; background: var(--surface-200); color: var(--brand); border-radius: 50%; }
+.confirmacion-acciones { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-4) var(--space-6); border-top: 1px solid var(--line); background: var(--surface-200); }
+
+/* Superficies de trabajo y señales de estado del módulo. */
+.card { background: #fffefa; }
+.tbl thead, .pager { background: #f6f6ef; }
+.tbl tbody tr:nth-child(even) td { background: #fbfbf7; }
+.filtros-estado, .cambio-estado { display: grid; gap: var(--space-2); }
+.seg button { border-color: #c3c5b8; background: #fffefa; }
+.seg button[aria-pressed="true"] { background: #edf0e8; border-color: #475740; box-shadow: inset 0 0 0 1px #475740; }
+.seg button[aria-pressed="true"]::before { content: '✓' / ''; }
+.pager [aria-current="page"] { color: var(--ink); background: #edf0e8; border-color: #475740; }
+.panel-estado { align-items: flex-start; }
+.cambio-estado + .cambio-estado { padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.chip[data-estado] { width: fit-content; }
+.chip[data-estado="DISPONIBLE"] { background: #eceee8; color: #354331; }
+.chip[data-estado="PRODUCTIVO"] { background: #dfefd9; color: #30582b; }
+.chip[data-estado="EN_COSECHA"] { background: #f2e6d2; color: #68491c; }
+.chip[data-estado="VACIADO_SANITARIO"] { background: #e3edef; color: #30555d; }
+.chip[data-estado="MANTENIMIENTO"] { background: #fff0c5; color: #654909; }
+.chip[data-estado="AISLAMIENTO"] { background: #fae4df; color: #822f24; }
+.detalle-resumen { display: grid; gap: var(--space-6); container-type: inline-size; }
+.datos-galpon { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--space-4); }
+.datos-galpon dt { color: var(--ink-muted); font-size: 0.875rem; }
+.datos-galpon dd { margin: var(--space-1) 0 0; overflow-wrap: anywhere; }
+.datos-lote-activo { display: grid; gap: var(--space-6); align-items: start; }
+.datos-lote-activo dd { overflow-wrap: anywhere; }
+@container (min-width: 60rem) {
+  .datos-lote-activo { grid-template-columns: 1fr 1fr; }
+}
+@container (max-width: 32rem) {
+  .datos-lote-activo .kv { grid-template-columns: auto minmax(0,1fr); }
+  .datos-lote-activo .g3 { grid-template-columns: 1fr; }
+}
