@@ -35,6 +35,7 @@ final class CatalogoErrores {
             Map.entry("NOMBRE_INVALIDO", "Nombre inválido"),
             Map.entry("ORIGEN_NO_AUTORIZADO", "Origen no autorizado"),
             Map.entry("PARAMETRO_INVALIDO", "Parámetro inválido"),
+            Map.entry("POBLACION_EXCEDE_CAPACIDAD", "Población excede la capacidad"),
             Map.entry("POBLACION_INICIAL_INVALIDA", "Población inicial inválida"),
             Map.entry("SIN_CAMBIOS", "Sin cambios"),
             Map.entry("SOLICITUD_NO_SOPORTADA", "Solicitud no soportada"),

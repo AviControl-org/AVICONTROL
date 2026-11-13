@@ -185,6 +185,41 @@ class LoteServiceTest {
     }
 
     @Test
+    void laPoblacionInicialMayorQueLaCapacidadEsConflictoYNoCambiaElEstadoNiGuarda() {
+        galponDisponibleYNombreLibre();
+
+        assertThatExceptionOfType(ConflictoException.class)
+                .isThrownBy(() -> servicio.registrar(new Comando(GALPON_ID, "Lote Uno", HOY, 5001, 2_500_000)))
+                .satisfies(e -> {
+                    assertThat(e.codigo()).isEqualTo("POBLACION_EXCEDE_CAPACIDAD");
+                    assertThat(e.getMessage()).isEqualTo("La población inicial no puede superar la capacidad del galpón.");
+                });
+
+        verifyNoInteractions(estados);
+        verify(lotes, never()).save(any());
+    }
+
+    @Test
+    void laPoblacionInicialIgualALaCapacidadSePermite() {
+        galponDisponibleYNombreLibre();
+        guardarDevuelveLoRecibido();
+
+        Lote lote = servicio.registrar(new Comando(GALPON_ID, "Lote Uno", HOY, 5000, 2_500_000));
+
+        assertThat(lote.poblacionInicial()).isEqualTo(5000);
+    }
+
+    @Test
+    void elEstadoDelGalponSeValidaAntesQueLaCapacidad() {
+        when(galpones.findById(GALPON_ID)).thenReturn(Optional.of(galpon(EstadoGalpon.PRODUCTIVO)));
+        when(lotes.existsByNombreClave(any())).thenReturn(false);
+
+        assertThatExceptionOfType(ConflictoException.class)
+                .isThrownBy(() -> servicio.registrar(new Comando(GALPON_ID, "Lote Uno", HOY, 9000, 2_500_000)))
+                .satisfies(e -> assertThat(e.codigo()).isEqualTo("GALPON_NO_DISPONIBLE"));
+    }
+
+    @Test
     void siOtroAdministradorGanoLaCarreraElEstadoEsperadoCambiadoSeTraduceAGalponNoDisponible() {
         galponDisponibleYNombreLibre();
         when(estados.solicitarCambio(any(), any(), any(), any())).thenThrow(new ConflictoException(

@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoteService implements RegistrarLoteUseCase, ListarLotesUseCase {
 
     private static final String GALPON_NO_DISPONIBLE = "El galpón seleccionado no está disponible para recibir un lote.";
+    private static final String POBLACION_EXCEDE_CAPACIDAD =
+            "La población inicial no puede superar la capacidad del galpón.";
 
     private final GalponRepository galpones;
     private final LoteRepository lotes;
@@ -39,7 +41,7 @@ public class LoteService implements RegistrarLoteUseCase, ListarLotesUseCase {
 
     /**
      * Una sola transacción: si el cambio de estado o el guardado del lote fallan, no queda nada (FR-012).
-     * Orden de validación: nombre -> fecha futura -> galpón existe (404) -> nombre único (409) -> galpón DISPONIBLE (409).
+     * Orden de validación: nombre -> fecha futura -> galpón existe (404) -> nombre único (409) -> galpón DISPONIBLE (409) -> población inicial dentro de la capacidad (409).
      */
     @Override
     @Transactional
@@ -56,6 +58,9 @@ public class LoteService implements RegistrarLoteUseCase, ListarLotesUseCase {
         }
         if (galpon.estado() != EstadoGalpon.DISPONIBLE) {
             throw new ConflictoException("GALPON_NO_DISPONIBLE", GALPON_NO_DISPONIBLE);
+        }
+        if (comando.poblacionInicial() > galpon.capacidad()) {
+            throw new ConflictoException("POBLACION_EXCEDE_CAPACIDAD", POBLACION_EXCEDE_CAPACIDAD);
         }
 
         // El cambio de estado va primero: toma el bloqueo del galpón y serializa a dos administradores que

@@ -48,9 +48,11 @@ Además de los archivos del árbol, el código completo de este caso de uso incl
 
 ## Decisiones de diseño
 
-**Orden de validación.** Formato y enteros del body (`400`, antes de entrar al servicio) -> nombre (`400 NOMBRE_INVALIDO`) -> fecha futura (`400 FECHA_INGRESO_FUTURA`) -> galpón existe (`404`) -> nombre único (`409 NOMBRE_DUPLICADO`) -> galpón DISPONIBLE (`409 GALPON_NO_DISPONIBLE`). El orden es fijo para que la misma solicitud inválida siempre dé el mismo error.
+**Orden de validación.** Formato y enteros del body (`400`, antes de entrar al servicio) -> nombre (`400 NOMBRE_INVALIDO`) -> fecha futura (`400 FECHA_INGRESO_FUTURA`) -> galpón existe (`404`) -> nombre único (`409 NOMBRE_DUPLICADO`) -> galpón DISPONIBLE (`409 GALPON_NO_DISPONIBLE`) -> población inicial dentro de la capacidad (`409 POBLACION_EXCEDE_CAPACIDAD`). El orden es fijo para que la misma solicitud inválida siempre dé el mismo error.
 
 **Carrera por el mismo galpón.** Dos administradores pueden registrar un lote en el mismo galpón a la vez. La solicitud de cambio de estado (`findByIdForUpdate`, T016) la serializa: el segundo recibe `ESTADO_ESPERADO_CAMBIADO` de `GalponEstadoService`, que `LoteService` traduce a `GALPON_NO_DISPONIBLE` para que el cliente vea un solo código (FR-003, FR-014). Todo ocurre en la misma transacción, así que el lote del segundo no se guarda.
+
+**Población frente a capacidad.** La población inicial puede ser igual a la capacidad del galpón, pero no mayor (P-03). La regla se evalúa en `LoteService.registrar` con la capacidad que lee en el mismo paso que el estado del galpón, y va al final para que los errores anteriores sigan igual. Se rechaza antes de pedir el cambio de estado, así que el galpón sigue DISPONIBLE y no se guarda nada. La capacidad se puede editar después (US9), pero esa edición solo es posible en MANTENIMIENTO, sin lote activo, por lo que no se revalida contra lotes ya registrados.
 
 **Nombre repetido en carrera.** Igual que en galpones: el índice único de `lower(nombre)` es la defensa final y el adaptador de persistencia traduce su violación a `ConflictoException` (`NOMBRE_DUPLICADO`).
 
@@ -111,6 +113,7 @@ Además de los archivos del árbol, el código completo de este caso de uso incl
 | 404 | `GALPON_NO_ENCONTRADO` | El galpón no existe |
 | 409 | `NOMBRE_DUPLICADO` | Nombre de lote ya existente (sin distinguir mayúsculas) |
 | 409 | `GALPON_NO_DISPONIBLE` | El galpón no está DISPONIBLE (también si se manipula la solicitud) |
+| 409 | `POBLACION_EXCEDE_CAPACIDAD` | La población inicial es mayor que la capacidad del galpón |
 | 400 | `FECHA_INGRESO_INVALIDA` | `fechaIngreso` ausente o con un formato distinto de `yyyy-MM-dd` |
 | 400 | `VALIDACION_FALLIDA` | Dos o más campos del body inválidos a la vez (el detalle va en `fieldErrors`) |
 | 400 | `CUERPO_INVALIDO` | El body no es un JSON válido |
@@ -191,6 +194,7 @@ Los galpones disponibles que muestra el formulario (FR-002) se obtienen con `GET
 | `GALPON_NO_ENCONTRADO` | Galpón no encontrado | El galpón seleccionado no existe. |
 | `NOMBRE_DUPLICADO` | Nombre duplicado | Ya existe un lote con ese nombre. |
 | `GALPON_NO_DISPONIBLE` | Galpón no disponible | El galpón seleccionado no está disponible para recibir un lote. |
+| `POBLACION_EXCEDE_CAPACIDAD` | Población excede la capacidad | La población inicial no puede superar la capacidad del galpón. |
 | `PARAMETRO_INVALIDO` | Parámetro inválido | Revisa los parámetros de la solicitud. |
 | `FECHA_INGRESO_INVALIDA` | Fecha de ingreso inválida | La fecha de ingreso es obligatoria y debe tener el formato yyyy-MM-dd. |
 | `VALIDACION_FALLIDA` | Validación fallida | Hay campos con datos inválidos. Revisa fieldErrors. |
@@ -975,7 +979,8 @@ public class LoteService implements RegistrarLoteUseCase, ListarLotesUseCase {
 
     /**
      * Una sola transacción: si el cambio de estado o el guardado del lote fallan, no queda nada (FR-012).
-     * Orden de validación: formato -> galpón existe (404) -> nombre único (409) -> galpón DISPONIBLE (409).
+     * Orden de validación: formato -> galpón existe (404) -> nombre único (409) -> galpón DISPONIBLE (409) ->
+     * población inicial dentro de la capacidad (409).
      */
     @Override
     @Transactional
@@ -992,6 +997,10 @@ public class LoteService implements RegistrarLoteUseCase, ListarLotesUseCase {
         }
         if (galpon.estado() != EstadoGalpon.DISPONIBLE) {
             throw new ConflictoException("GALPON_NO_DISPONIBLE", GALPON_NO_DISPONIBLE);
+        }
+        if (comando.poblacionInicial() > galpon.capacidad()) {
+            throw new ConflictoException("POBLACION_EXCEDE_CAPACIDAD",
+                    "La población inicial no puede superar la capacidad del galpón.");
         }
 
         // El cambio de estado va primero: toma el bloqueo del galpón y serializa a dos administradores que
@@ -1150,7 +1159,6 @@ public class LotePersistenceAdapter implements LoteRepository {
 ## Fuera de alcance
 
 - No persiste el estado del galpón: solo remite la solicitud al spec Actualizar estado (FR-010).
-- No valida que la población inicial quepa en la capacidad del galpón (el spec no lo pide).
 - El historial de lotes por galpón lo cubre el plan de consultar galpón y lote.
 - Los comportamientos de interfaz del spec (formulario, confirmación, redirección al listado) son del cliente; la API solo expone el resultado.
 
@@ -1195,5 +1203,5 @@ En `src/test/resources/contratos/`:
 ## Pendientes de clarificación
 
 - P-08: criterio de lote activo (`desvinculado_en IS NULL`).
-- P-03: el spec no valida que la población inicial quepa en la capacidad del galpón.
+- P-03 (resuelto): el spec no pedía validar que la población inicial quepa en la capacidad del galpón. Se decidió rechazarla con `409 POBLACION_EXCEDE_CAPACIDAD` (igual a la capacidad se permite).
 - P-09: ruta, nombres de campo y códigos de error propuestos por este plan.

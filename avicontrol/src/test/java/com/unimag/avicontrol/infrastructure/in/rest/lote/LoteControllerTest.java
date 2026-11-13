@@ -125,6 +125,17 @@ class LoteControllerTest {
     }
 
     @Test
+    void poblacionQueExcedeLaCapacidadDevuelve409ConElFixtureDeError() throws Exception {
+        when(registrarLote.registrar(any())).thenThrow(new ConflictoException("POBLACION_EXCEDE_CAPACIDAD",
+                "La población inicial no puede superar la capacidad del galpón."));
+
+        MvcResult resultado = enviar(FixtureJson.texto("lote-registrar-request.json"));
+
+        assertThat(resultado.getResponse().getStatus()).isEqualTo(409);
+        FixtureJson.assertCoincide("error-poblacion-excede-capacidad.json", resultado);
+    }
+
+    @Test
     void galponInexistenteDevuelve404() throws Exception {
         when(registrarLote.registrar(any())).thenThrow(
                 new RecursoNoEncontradoException("GALPON_NO_ENCONTRADO", "El galpón seleccionado no existe."));

@@ -211,13 +211,13 @@ No hay REST. `ActualizarPoblacionUseCase.actualizar({alertaId, loteId, galponId,
 Body: `{nombre (1-100, letras/números/espacios/guiones, único sin distinguir mayúsculas), capacidad (entero > 0)}`. Respuesta `201` con `Location: /api/v1/galpones/{id}`: `{id, nombre, capacidad, estado: "DISPONIBLE"}`.
 Errores: `400 NOMBRE_INVALIDO`, `400 CAPACIDAD_INVALIDA`, `409 NOMBRE_DUPLICADO`, `400 VALIDACION_FALLIDA`, `400 CUERPO_INVALIDO`, `500 ERROR_INTERNO`.
 
-**Debe coincidir**: todo galpón nace `DISPONIBLE`; `nombre` y `capacidad` son los mismos que ven las consultas 5.1 y 5.2. La capacidad frente a la población inicial no se valida (P-03).
+**Debe coincidir**: todo galpón nace `DISPONIBLE`; `nombre` y `capacidad` son los mismos que ven las consultas 5.1 y 5.2. Al registrar un lote, la población inicial no puede ser mayor que esta `capacidad` (`409 POBLACION_EXCEDE_CAPACIDAD`, P-03).
 
 ### 6.3 Registrar lote: `POST /api/v1/lotes` y `GET /api/v1/lotes`
 
 Body del `POST`: `{galponId, nombre, fechaIngreso (yyyy-MM-dd, no futura), poblacionInicial (entero > 0), costoTotal (entero > 0, pesos)}`. Respuesta `201` con `Location`: `{id, nombre, galponId, fechaIngreso, poblacionInicial, poblacionActual, costoTotal}`; `poblacionActual` nace igual a `poblacionInicial`.
 `GET /api/v1/lotes?page=1`: página de lotes por fecha de ingreso descendente.
-Errores: `400 NOMBRE_INVALIDO`, `400 FECHA_INGRESO_FUTURA`, `400 FECHA_INGRESO_INVALIDA`, `400 POBLACION_INICIAL_INVALIDA`, `400 COSTO_TOTAL_INVALIDO`, `400 GALPON_REQUERIDO`, `404 GALPON_NO_ENCONTRADO`, `409 NOMBRE_DUPLICADO`, `409 GALPON_NO_DISPONIBLE`, `400 VALIDACION_FALLIDA`, `400 CUERPO_INVALIDO`, `400 PARAMETRO_INVALIDO`, `500 ERROR_INTERNO`.
+Errores: `400 NOMBRE_INVALIDO`, `400 FECHA_INGRESO_FUTURA`, `400 FECHA_INGRESO_INVALIDA`, `400 POBLACION_INICIAL_INVALIDA`, `400 COSTO_TOTAL_INVALIDO`, `400 GALPON_REQUERIDO`, `404 GALPON_NO_ENCONTRADO`, `409 NOMBRE_DUPLICADO`, `409 GALPON_NO_DISPONIBLE`, `409 POBLACION_EXCEDE_CAPACIDAD`, `400 VALIDACION_FALLIDA`, `400 CUERPO_INVALIDO`, `400 PARAMETRO_INVALIDO`, `500 ERROR_INTERNO`.
 
 **Debe coincidir**: registrar un lote deja el galpón en `PRODUCTIVO` (origen `REGISTRO_LOTE`); desde ese momento el Módulo 2 puede enviar mortalidad y alertas sanitarias. El `id` del lote es el `loteId` que el Módulo 2 usa en sus eventos.
 
