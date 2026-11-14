@@ -53,3 +53,30 @@ Este documento explica brevemente los casos de uso encontrados en el diagrama, d
 	2. **Operario de granja**: Ocupa visualizar los galpones y lotes activos para supervisar la situación operativa de la granja.
 	3. **Módulo 2**: Ocupa visualizar los galpones y lotes activos para conocer la edad del lote para el control de la dieta de los pollos.
 	4. **Módulo 3**: Ocupa visualizar los galpones y lotes activos para conocer el costo total del lote y los pollos finales para poder calcular los costos de crianza y la venta bruta del lote. 
+
+---
+## Matriz de permisos
+
+Resume quién puede hacer qué, a partir de la descripción de cada actor. La interfaz la aplica desde un solo lugar
+(`frontend/src/app/permisos.ts`): cada pantalla que escribe datos declara el permiso que necesita, y las acciones que
+un rol no puede usar no se le muestran.
+
+| Caso de uso | Administrador | Técnico de infraestructura | Operario de granja |
+|---|:---:|:---:|:---:|
+| Consultar galpón y/o lote | ✓ | ✓ | ✓ |
+| Registrar galpón | ✓ | | |
+| Editar galpón | ✓ | | |
+| Registrar lote | ✓ | | |
+| Actualizar estado (transiciones manuales) | ✓ | | |
+| Generar alerta de mantenimiento | | ✓ | |
+| Atender alerta de mantenimiento | ✓ | | |
+
+El técnico necesita consultar para elegir el galpón al generar la alerta.
+
+Los Módulos 2 y 3 no aparecen porque no usan la interfaz: el Módulo 2 se integra por Kafka y el Módulo 3 consulta por
+la API REST. Los cambios de estado que originan el Módulo 2 y el proceso automático se autorizan en el backend con
+`TransicionesPermitidas`, por origen y no por rol.
+
+**Esta matriz no es control de acceso.** La API no valida identidad ni rol, porque la autenticación está fuera del
+alcance de este módulo (P-01): un cliente puede invocar cualquier operación directamente. La matriz fija la regla de
+negocio en un lugar verificable, lista para conectarse a la autorización real cuando se defina la autenticación.
