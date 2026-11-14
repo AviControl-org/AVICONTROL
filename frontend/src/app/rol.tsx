@@ -1,11 +1,16 @@
 import { useState, type ReactNode } from 'react'
-import { CLAVE_ROL, RolContext, type Rol } from './rol-contexto'
+import { CLAVE_ROL, esRol, RolContext, type Rol } from './rol-contexto'
 
+const ROL_POR_DEFECTO: Rol = 'ADMINISTRADOR'
+
+// Se valida contra los roles que existen: así agregar un rol no exige tocar esta función, y un valor
+// viejo o manipulado en localStorage cae en el rol por defecto en lugar de romper la aplicación.
 function rolGuardado(): Rol {
   try {
-    return localStorage.getItem(CLAVE_ROL) === 'TECNICO_INFRAESTRUCTURA' ? 'TECNICO_INFRAESTRUCTURA' : 'ADMINISTRADOR'
+    const guardado = localStorage.getItem(CLAVE_ROL)
+    return esRol(guardado) ? guardado : ROL_POR_DEFECTO
   } catch {
-    return 'ADMINISTRADOR'
+    return ROL_POR_DEFECTO
   }
 }
 

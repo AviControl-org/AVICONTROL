@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useMatches } from 'react-router'
-import { NOMBRE_ROL, useRol, type Rol } from '../app/rol-contexto'
+import { NOMBRE_ROL, ROLES, useRol, type Rol } from '../app/rol-contexto'
 import { Icono, Isotipo, type NombreIcono } from './Icono'
 
 interface EnlaceNav {
@@ -8,7 +8,8 @@ interface EnlaceNav {
   icono: NombreIcono
 }
 
-// Navegación por rol, como en los mockups.
+// Navegación por rol, como en los mockups. Cada rol ve solo las pantallas que su matriz de permisos
+// le permite usar (app/permisos.ts); el operario de granja solo consulta.
 const NAV: Record<Rol, EnlaceNav[]> = {
   ADMINISTRADOR: [
     { a: '/galpones', texto: 'Galpones', icono: 'galpon' },
@@ -17,6 +18,10 @@ const NAV: Record<Rol, EnlaceNav[]> = {
   ],
   TECNICO_INFRAESTRUCTURA: [
     { a: '/alertas-mantenimiento/generar', texto: 'Alerta de mantenimiento', icono: 'llave' },
+  ],
+  OPERARIO: [
+    { a: '/galpones', texto: 'Galpones', icono: 'galpon' },
+    { a: '/lotes', texto: 'Lotes', icono: 'lotes' },
   ],
 }
 
@@ -71,7 +76,7 @@ export function AppShell() {
               value={rol}
               onChange={(evento) => cambiarRol(evento.target.value as Rol)}
             >
-              {(Object.keys(NOMBRE_ROL) as Rol[]).map((opcion) => (
+              {ROLES.map((opcion) => (
                 <option key={opcion} value={opcion}>
                   {NOMBRE_ROL[opcion]}
                 </option>
