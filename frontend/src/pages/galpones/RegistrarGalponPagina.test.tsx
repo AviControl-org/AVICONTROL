@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { GalponesPagina } from './GalponesPagina'
 import { RegistrarGalponPagina } from './RegistrarGalponPagina'
+import { ConRol } from '../../test/renderizar'
 
 function renderizarFlujo() {
   const consultas = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -16,9 +17,11 @@ function renderizarFlujo() {
     { initialEntries: ['/galpones/registrar'] },
   )
   render(
-    <QueryClientProvider client={consultas}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <ConRol>
+      <QueryClientProvider client={consultas}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ConRol>,
   )
   return router
 }

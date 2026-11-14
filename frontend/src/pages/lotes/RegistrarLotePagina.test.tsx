@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { LotesPagina } from './LotesPagina'
 import { RegistrarLotePagina } from './RegistrarLotePagina'
 import { lotes } from '../../mocks/datos'
+import { ConRol } from '../../test/renderizar'
 
 function renderizarFlujo(ruta = '/lotes/registrar') {
   const consultas = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -17,9 +18,11 @@ function renderizarFlujo(ruta = '/lotes/registrar') {
     { initialEntries: [ruta] },
   )
   render(
-    <QueryClientProvider client={consultas}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <ConRol>
+      <QueryClientProvider client={consultas}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ConRol>,
   )
   return router
 }

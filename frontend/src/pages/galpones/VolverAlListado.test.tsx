@@ -6,6 +6,7 @@ import { expect, it } from 'vitest'
 import { EditarPagina } from './EditarPagina'
 import { EstadoPagina } from './EstadoPagina'
 import { GalponesPagina } from './GalponesPagina'
+import { ConRol } from '../../test/renderizar'
 
 function abrir(accion: 'editar' | 'estado') {
   const id = '550e8400-e29b-41d4-a716-446655440000'
@@ -14,9 +15,9 @@ function abrir(accion: 'editar' | 'estado') {
     { path: '/galpones/:galponId/editar', element: <EditarPagina /> },
     { path: '/galpones/:galponId/estado', element: <EstadoPagina /> },
   ], { initialEntries: ['/galpones/' + id + '/' + accion] })
-  render(<QueryClientProvider client={new QueryClient()}>
+  render(<ConRol><QueryClientProvider client={new QueryClient()}>
     <RouterProvider router={router} />
-  </QueryClientProvider>)
+  </QueryClientProvider></ConRol>)
   return router
 }
 
