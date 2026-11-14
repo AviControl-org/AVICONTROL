@@ -186,8 +186,8 @@ class AlertaMantenimientoControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"))
                 .andExpect(jsonPath("$.fieldErrors.length()").value(2))
-                .andExpect(jsonPath("$.fieldErrors[0].field").value("descripcion"))
-                .andExpect(jsonPath("$.fieldErrors[1].field").value("tecnicoId"));
+                .andExpect(jsonPath("$.fieldErrors[*].field",
+                        org.hamcrest.Matchers.containsInAnyOrder("descripcion", "tecnicoId")));
 
         verifyNoInteractions(alertas);
     }

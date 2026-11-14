@@ -835,4 +835,4 @@ En `src/test/resources/contratos/`:
 ## Pendientes de clarificación
 
 - P-09: ruta, nombres de campo y códigos de error propuestos por este plan.
-- P-03: el spec no relaciona la capacidad con la población de futuros lotes.
+- P-03 (resuelto): el spec no relaciona la capacidad con la población de futuros lotes. Al registrar un lote se rechaza una población inicial mayor que la capacidad (`409 POBLACION_EXCEDE_CAPACIDAD`, ver plan de Registrar lote).
