@@ -11,6 +11,8 @@ import { PageHeader } from '../../components/PageHeader'
 import { StatTile } from '../../components/StatTile'
 import { StatusChip } from '../../components/StatusChip'
 import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
+import { puede } from '../../app/permisos'
+import { useRol } from '../../app/rol-contexto'
 
 /** Un campo del lote que la API omitió por estar vacío o inválido se muestra como "No disponible" (FR-016). */
 function oNoDisponible<T>(valor: T | undefined, mostrar: (valor: T) => ReactNode): ReactNode {
@@ -39,6 +41,7 @@ function textoONoDisponible<T>(valor: T | undefined, mostrar: (valor: T) => stri
 
 /** Consultar galpón y lote · Detalle del galpón, su lote activo y el historial de lotes (US3). */
 export function GalponDetallePagina() {
+  const { rol } = useRol()
   const { galponId = '' } = useParams()
   const detalle = useQuery({ queryKey: ['galpon', galponId], queryFn: () => obtenerGalpon(galponId) })
   const historial = useQuery({
@@ -101,14 +104,18 @@ export function GalponDetallePagina() {
         acciones={
           <>
             {volver}
-            <Link className="btn" to={`/galpones/${galpon.id}/editar`}>
-              <Icono nombre="lapiz" />
-              Editar galpón
-            </Link>
-            <Link className="btn p" to={`/galpones/${galpon.id}/estado`}>
-              <Icono nombre="reintentar" />
-              Ver estado e historial
-            </Link>
+            {puede(rol, 'EDITAR_GALPON') && (
+              <Link className="btn" to={`/galpones/${galpon.id}/editar`}>
+                <Icono nombre="lapiz" />
+                Editar galpón
+              </Link>
+            )}
+            {puede(rol, 'ACTUALIZAR_ESTADO') && (
+              <Link className="btn p" to={`/galpones/${galpon.id}/estado`}>
+                <Icono nombre="reintentar" />
+                Ver estado e historial
+              </Link>
+            )}
           </>
         }
       />
@@ -154,7 +161,7 @@ export function GalponDetallePagina() {
             </div>
           ) : (
             <EmptyState titulo={galpon.mensaje ?? 'El galpón no tiene un lote activo'}>
-              {galpon.estado === 'DISPONIBLE' && (
+              {galpon.estado === 'DISPONIBLE' && puede(rol, 'REGISTRAR_LOTE') && (
                 <>
                   <p className="mut">Registra un lote para iniciar la crianza.</p>
                   <Link className="btn" to={`/lotes/registrar?galponId=${galpon.id}`}>

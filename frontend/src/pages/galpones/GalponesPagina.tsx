@@ -13,6 +13,8 @@ import { Pager } from '../../components/Pager'
 import { StatusChip } from '../../components/StatusChip'
 import type { AvisoListado } from '../aviso'
 import { ErrorDeConsulta } from '../../components/ErrorDeConsulta'
+import { puede } from '../../app/permisos'
+import { useRol } from '../../app/rol-contexto'
 
 type Orden = NonNullable<ParametrosListado['orden']>
 
@@ -42,6 +44,7 @@ function leerCriterios(query: URLSearchParams): ParametrosListado {
 
 /** Consultar galpón y lote · Listado (US3, FR-001 a FR-009, FR-019, FR-020). */
 export function GalponesPagina() {
+  const { rol } = useRol()
   const [query, setQuery] = useSearchParams()
   const aviso = useLocation().state as AvisoListado | null
   const criterios = leerCriterios(query)
@@ -81,14 +84,18 @@ export function GalponesPagina() {
         subtitulo="Consulta el estado de cada galpón y abre su detalle."
         acciones={
           <>
-            <Link className="btn" to="/lotes/registrar">
-              <Icono nombre="mas" />
-              Registrar lote
-            </Link>
-            <Link className="btn p" to="/galpones/registrar">
-              <Icono nombre="mas" />
-              Registrar galpón
-            </Link>
+            {puede(rol, 'REGISTRAR_LOTE') && (
+              <Link className="btn" to="/lotes/registrar">
+                <Icono nombre="mas" />
+                Registrar lote
+              </Link>
+            )}
+            {puede(rol, 'REGISTRAR_GALPON') && (
+              <Link className="btn p" to="/galpones/registrar">
+                <Icono nombre="mas" />
+                Registrar galpón
+              </Link>
+            )}
           </>
         }
       />
@@ -185,10 +192,14 @@ export function GalponesPagina() {
           {criterios.estado ? <EmptyState titulo={'No hay galpones en ' + ESTADO_GALPON[criterios.estado].texto}>
             <button type="button" className="btn" onClick={() => actualizar({ estado: undefined, page: undefined })}>Quitar filtro</button>
           </EmptyState> : <EmptyState titulo="Todavía no hay galpones registrados">
-            <Link className="btn p" to="/galpones/registrar">
-              <Icono nombre="mas" />
-              Registrar galpón
-            </Link>
+            {puede(rol, 'REGISTRAR_GALPON') ? (
+              <Link className="btn p" to="/galpones/registrar">
+                <Icono nombre="mas" />
+                Registrar galpón
+              </Link>
+            ) : (
+              <p className="mut">El administrador es quien registra los galpones.</p>
+            )}
           </EmptyState>}
         </section>
       )}

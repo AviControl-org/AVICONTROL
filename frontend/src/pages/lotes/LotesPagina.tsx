@@ -10,9 +10,12 @@ import { Icono } from '../../components/Icono'
 import { PageHeader } from '../../components/PageHeader'
 import { Pager } from '../../components/Pager'
 import type { AvisoListado } from '../aviso'
+import { puede } from '../../app/permisos'
+import { useRol } from '../../app/rol-contexto'
 
 /** Listado de lotes de registrar lote (US2, FR-013): activos y anteriores, del ingreso más reciente al más antiguo. */
 export function LotesPagina() {
+  const { rol } = useRol()
   const [query, setQuery] = useSearchParams()
   const aviso = useLocation().state as AvisoListado | null
   const pagina = Math.max(1, Number(query.get('page') ?? '1') || 1)
@@ -38,10 +41,12 @@ export function LotesPagina() {
         titulo="Lotes"
         subtitulo="Todos los lotes registrados, del ingreso más reciente al más antiguo."
         acciones={
-          <Link className="btn p" to="/lotes/registrar">
-            <Icono nombre="mas" />
-            Registrar lote
-          </Link>
+          puede(rol, 'REGISTRAR_LOTE') ? (
+            <Link className="btn p" to="/lotes/registrar">
+              <Icono nombre="mas" />
+              Registrar lote
+            </Link>
+          ) : undefined
         }
       />
 
@@ -65,10 +70,14 @@ export function LotesPagina() {
       {datos && datos.totalElementos === 0 && !consulta.isError && (
         <section className="card">
           <EmptyState titulo="Todavía no hay lotes registrados">
-            <Link className="btn p" to="/lotes/registrar">
-              <Icono nombre="mas" />
-              Registrar lote
-            </Link>
+            {puede(rol, 'REGISTRAR_LOTE') ? (
+              <Link className="btn p" to="/lotes/registrar">
+                <Icono nombre="mas" />
+                Registrar lote
+              </Link>
+            ) : (
+              <p className="mut">El administrador es quien registra los lotes.</p>
+            )}
           </EmptyState>
         </section>
       )}
