@@ -9,9 +9,11 @@ import { EstadoPagina } from '../pages/galpones/EstadoPagina'
 import { EditarPagina } from '../pages/galpones/EditarPagina'
 import { AlertasPagina } from '../pages/mantenimiento/AlertasPagina'
 import { GenerarAlertaPagina } from '../pages/mantenimiento/GenerarAlertaPagina'
-import { VistaRol } from './VistaRol'
+import { ConPermiso } from './ConPermiso'
 
 // Una ruta por pantalla de los mockups. La fase es la de docs/plan-general/plan-modulo-1.md.
+// Cada pantalla que escribe datos declara el permiso que necesita; la matriz esta en permisos.ts.
+// Las de consulta no llevan guarda: los tres actores pueden consultar galpones y lotes.
 export const router = createBrowserRouter([
   {
     element: <AppShell />,
@@ -25,7 +27,11 @@ export const router = createBrowserRouter([
           {
             path: 'registrar',
             handle: { miga: 'Registrar galpón' },
-            element: <RegistrarGalponPagina />,
+            element: (
+              <ConPermiso permiso="REGISTRAR_GALPON">
+                <RegistrarGalponPagina />
+              </ConPermiso>
+            ),
           },
           {
             path: ':galponId',
@@ -35,12 +41,20 @@ export const router = createBrowserRouter([
               {
                 path: 'estado',
                 handle: { miga: 'Actualizar estado' },
-                element: <VistaRol rol="ADMINISTRADOR"><EstadoPagina/></VistaRol>,
+                element: (
+                  <ConPermiso permiso="ACTUALIZAR_ESTADO">
+                    <EstadoPagina />
+                  </ConPermiso>
+                ),
               },
               {
                 path: 'editar',
                 handle: { miga: 'Editar' },
-                element: <VistaRol rol="ADMINISTRADOR"><EditarPagina/></VistaRol>,
+                element: (
+                  <ConPermiso permiso="EDITAR_GALPON">
+                    <EditarPagina />
+                  </ConPermiso>
+                ),
               },
             ],
           },
@@ -54,7 +68,11 @@ export const router = createBrowserRouter([
           {
             path: 'registrar',
             handle: { miga: 'Registrar lote' },
-            element: <RegistrarLotePagina />,
+            element: (
+              <ConPermiso permiso="REGISTRAR_LOTE">
+                <RegistrarLotePagina />
+              </ConPermiso>
+            ),
           },
         ],
       },
@@ -62,19 +80,21 @@ export const router = createBrowserRouter([
         path: 'alertas',
         handle: { miga: 'Alertas' },
         element: (
-          <VistaRol rol="ADMINISTRADOR"><AlertasPagina/></VistaRol>
+          <ConPermiso permiso="ATENDER_ALERTA_MANTENIMIENTO">
+            <AlertasPagina />
+          </ConPermiso>
         ),
       },
       {
         path: 'alertas-mantenimiento/generar',
         handle: { miga: 'Alerta de mantenimiento' },
         element: (
-          <VistaRol rol="TECNICO_INFRAESTRUCTURA"><GenerarAlertaPagina/></VistaRol>
+          <ConPermiso permiso="GENERAR_ALERTA_MANTENIMIENTO">
+            <GenerarAlertaPagina />
+          </ConPermiso>
         ),
       },
       { path: '*', element: <Navigate to="/galpones" replace /> },
     ],
   },
 ])
-
-
