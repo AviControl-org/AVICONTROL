@@ -77,6 +77,16 @@ cobertura queda en `target/site/jacoco/index.html`.
 Prefijo `/api/v1`. Los errores siguen RFC 9457 (`application/problem+json`) con un campo `code` propio. Las consultas
 responden con `Cache-Control: no-store`.
 
+El contrato completo se publica en OpenAPI 3.1, con los esquemas de cada peticion y respuesta:
+
+| Ruta | Para que |
+|---|---|
+| `/swagger-ui.html` | Explorar la API y probar las operaciones desde el navegador |
+| `/v3/api-docs` | Documento OpenAPI en JSON, para generar un cliente |
+
+Los Modulos 2 y 3 pueden consumir `/v3/api-docs` en lugar de leer los planes de `docs/spec-*`. Las rutas del
+simulador del Modulo 2 no aparecen en el documento: existen solo con el perfil `local`.
+
 | Método y ruta | Descripción |
 |---|---|
 | `POST /galpones` | Registrar galpón |
