@@ -37,7 +37,7 @@ jobs:
       # Se publican tambien cuando las pruebas fallan: es justo cuando hacen falta.
       - name: Guardar reportes de pruebas y cobertura
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: reportes-backend
           path: |
