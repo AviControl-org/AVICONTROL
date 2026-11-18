@@ -259,7 +259,7 @@ Se hacen en la consola con la sesión de cada integrante. Nadie comparte claves 
    sudo usermod -aG docker ubuntu
    ```
    Cerrar la sesión SSH y volver a entrar para que el grupo `docker` aplique.
-8. Repositorio: `git clone` de AviControl-org/AVICONTROL y `git checkout` de la rama que se despliega. Si el repositorio es privado, se usa un token personal de GitHub de solo lectura que no se guarda en la instancia.
+8. Repositorio: `git clone https://github.com/AviControl-org/AVICONTROL.git` y quedarse en `develop`, que ya incluye estos archivos tras el merge de `feature/despliegue-aws`. El repositorio es público, así que no se necesita token.
 9. Configuración: `cd AVICONTROL/despliegue`, `cp .env.example .env` y llenar `IP_PUBLICA` y `POSTGRES_PASSWORD`.
 10. Arranque: `docker compose up -d --build` y revisar con `docker compose ps` y `docker compose logs -f backend`.
 11. Tópicos (también después de cada reinicio de Kafka):
@@ -319,7 +319,7 @@ Luego se pega una línea `GALPON_ID|{...sobre del evento...}` con el ejemplo de 
 
 ## Dependencias
 
-- Rama de trabajo: `feature/despliegue-aws`, salida de `develop`.
+- Rama de trabajo: `feature/despliegue-aws`, salida de `develop`. El despliegue en la instancia sale de `develop`, después del merge.
 - Los archivos TD01 a TD05 se crean solo después de aprobar esta spec y este plan.
 - TD07 en adelante necesitan la cuenta de AWS con sesión iniciada por un integrante del Módulo 1.
 - TD11 necesita las IPs y la confirmación de los Módulos 2 y 3.
@@ -330,5 +330,5 @@ Luego se pega una línea `GALPON_ID|{...sobre del evento...}` con el ejemplo de 
 |---|---|---|
 | D-03 | Entrada de los Módulos 2 y 3 por el puerto 80 o por el 8080 | Pendiente de los tres grupos |
 | D-04 | CORS si el Módulo 3 llama desde un navegador | Pendiente del Módulo 3 |
-| PD-01 | Si el repositorio es privado, cómo se clona en la instancia (token de solo lectura o volverlo público durante la revisión) | Pendiente del equipo del Módulo 1 |
-| PD-02 | Qué rama se despliega: `feature/despliegue-aws` mientras se prueba y `develop` después del merge | Pendiente del equipo del Módulo 1 |
+| PD-01 | Cómo se clona el repositorio en la instancia | Decidido: el repositorio es público, `git clone` sin credenciales |
+| PD-02 | Qué rama se despliega | Decidido: `develop`, después del merge de `feature/despliegue-aws` |
