@@ -1,0 +1,8 @@
+{
+  "alertaId": "5b1c7d52-3a08-4f0e-9c1d-77a1d4e0b6aa",
+  "accion": "AISLAMIENTO",
+  "fechaHora": "2026-10-05T09:15:00-05:00",
+  "tipoEnfermedad": "Sospecha de Newcastle",
+  "descripcion": "Mortalidad atípica y signos respiratorios",
+  "loteId": "2fc03a21-84c4-4c83-bb15-6607bb75cb90"
+}

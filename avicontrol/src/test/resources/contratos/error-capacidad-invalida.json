@@ -1,0 +1,15 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/capacidad-invalida",
+  "title": "Capacidad inválida",
+  "status": 400,
+  "detail": "La capacidad debe ser un número entero mayor que cero.",
+  "instance": "/api/v1/galpones",
+  "code": "CAPACIDAD_INVALIDA",
+  "fieldErrors": [
+    {
+      "field": "capacidad",
+      "code": "ENTERO_POSITIVO",
+      "message": "Debe ser un entero mayor que cero"
+    }
+  ]
+}

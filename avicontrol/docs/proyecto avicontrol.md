@@ -13,7 +13,7 @@ Este módulo digitaliza la capacidad física de la granja y organiza la distribu
 #### 1.1. Entidad Galpón (Atributos)
 Cada unidad debe estar indexada con metadatos que definan su capacidad operativa:
 *   **Identificación:** ID Único (UUID), número o nombre del galpón.
-*   **Capacidad Técnica:** Aforo máximo de pollos (basado en metros cuadrados y ventilación).
+*   **Capacidad:** capacidad de pollos (basado en metros cuadrados y ventilación).
 *   **Población Actual:** Cantidad de pollos vivos en el lote actual.
 *   **Edad del Lote:** Días transcurridos desde el ingreso (parámetro crítico para la alimentación).
 
@@ -28,7 +28,7 @@ El caso de uso **Actualizar estado** es el único responsable de validar y persi
 | Productivo | Aislamiento | Alerta sanitaria válida |
 | En cosecha | Vaciado sanitario | Alerta de vaciado sanitario válida |
 | Aislamiento | Productivo | Alerta sanitaria válida de reanudación |
-| Aislamiento | Vaciado sanitario | Alerta de vaciado sanitario válida |
+| Aislamiento | En cosecha | Administrador al resolver el aislamiento y retomar la cosecha |
 | Mantenimiento | Disponible | Administrador al finalizar mantenimiento |
 | Vaciado sanitario | Disponible | Proceso automático al finalizar el periodo configurado |
 
@@ -60,7 +60,7 @@ Este módulo consolida los datos operativos y de inventario para determinar el �
 Consolidación automática de egresos por lote:
 *   **Costo de Alimento:** Kg consumidos de cada tipo multiplicado por su precio de inventario.
 *   **Insumos Médicos:** Costo de vacunas y medicamentos aplicados.
-*   **Costo de Población:** Valor de adquisición de los pollitos iniciales.
+*   **Costo de Población:** Valor de adquisición de los pollos iniciales.
 
 #### 3.2. Matriz de Venta Final (Ingreso Neto)
 

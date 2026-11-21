@@ -106,7 +106,7 @@ Como módulo 1, quiero recibir del módulo 2 una alerta sanitaria de reanudació
   - Nombre único
   - Estado: Disponible, vaciado sanitario, productivo, en cosecha, mantenimiento o aislamiento
 
-- **Lote**: Grupo de aves que puede utilizarse para identificar el galpón afectado.
+- **Lote**: Grupo de pollos que puede utilizarse para identificar el galpón afectado.
     - UUID único
     - Nombre
     - Población inicial

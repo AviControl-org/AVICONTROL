@@ -1,0 +1,8 @@
+{
+  "alertaId": "5b1c7d52-3a08-4f0e-9c1d-77a1d4e0b6aa",
+  "accion": "AISLAMIENTO",
+  "galponId": "550e8400-e29b-41d4-a716-446655440000",
+  "fechaHora": "2026-10-05T09:15:00-05:00",
+  "tipoEnfermedad": "Sospecha de Newcastle",
+  "descripcion": "Mortalidad atípica y signos respiratorios"
+}

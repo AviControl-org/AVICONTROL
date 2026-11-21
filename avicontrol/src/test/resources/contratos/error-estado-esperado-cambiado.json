@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/estado-esperado-cambiado",
+  "title": "Estado desactualizado",
+  "status": 409,
+  "detail": "El estado del galpón cambió. Actualiza la información e inténtalo de nuevo.",
+  "instance": "/api/v1/galpones/550e8400-e29b-41d4-a716-446655440000/estado",
+  "code": "ESTADO_ESPERADO_CAMBIADO"
+}

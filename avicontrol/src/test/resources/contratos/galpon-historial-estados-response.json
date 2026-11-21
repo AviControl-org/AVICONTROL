@@ -1,0 +1,24 @@
+{
+  "contenido": [
+    {
+      "id": "7c3e9a14-5d2b-4e8f-b6a1-3f0d8c2e9b57",
+      "galponId": "550e8400-e29b-41d4-a716-446655440000",
+      "estadoAnterior": "PRODUCTIVO",
+      "estadoNuevo": "EN_COSECHA",
+      "fechaHora": "2026-10-05T09:15:00-05:00",
+      "origen": "ADMINISTRADOR"
+    },
+    {
+      "id": "b84f1d60-92a7-4c35-8e0b-6a5d3c7f1e29",
+      "galponId": "550e8400-e29b-41d4-a716-446655440000",
+      "estadoAnterior": "DISPONIBLE",
+      "estadoNuevo": "PRODUCTIVO",
+      "fechaHora": "2026-09-15T08:00:00-05:00",
+      "origen": "REGISTRO_LOTE"
+    }
+  ],
+  "pagina": 1,
+  "tamanio": 20,
+  "totalElementos": 2,
+  "totalPaginas": 1
+}

@@ -1,0 +1,8 @@
+{
+  "type": "https://avicontrol.unimag.edu.co/errors/poblacion-excede-capacidad",
+  "title": "Población excede la capacidad",
+  "status": 409,
+  "detail": "La población inicial no puede superar la capacidad del galpón.",
+  "instance": "/api/v1/lotes",
+  "code": "POBLACION_EXCEDE_CAPACIDAD"
+}

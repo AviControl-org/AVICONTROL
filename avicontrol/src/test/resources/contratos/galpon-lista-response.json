@@ -1,0 +1,33 @@
+{
+  "contenido": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "nombre": "Galpón Este",
+      "capacidad": 800,
+      "estado": "EN_COSECHA"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "nombre": "Galpón Norte",
+      "capacidad": 1500,
+      "estado": "PRODUCTIVO"
+    },
+    {
+      "id": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+      "nombre": "Galpón Sur",
+      "capacidad": 2000,
+      "estado": "DISPONIBLE"
+    },
+    {
+      "id": "c5e8f3a2-6b17-4d09-9f2e-8a1b3c4d5e6f",
+      "nombre": "Galpón Oeste",
+      "capacidad": 1800,
+      "estado": "PRODUCTIVO"
+    }
+  ],
+  "pagina": 1,
+  "tamanio": 10,
+  "totalElementos": 4,
+  "totalPaginas": 1,
+  "sinCoincidencias": false
+}
